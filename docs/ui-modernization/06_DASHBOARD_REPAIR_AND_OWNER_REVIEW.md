@@ -216,26 +216,44 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ---
 
-## V. ĐỒNG BỘ GIT & TRẠNG THÁI PULL REQUEST
+## V. ĐỒNG BỘ GIT, CI & TRẠNG THÁI PULL REQUEST
 
 ### 1. Trạng thái Git Local & Remote
-- Nhánh: `feat/edms-modern-aurora-ui`
-- Commit đã tích hợp:
+- **Nhánh thực hiện:** `feat/edms-modern-aurora-ui` (tracking `origin/feat/edms-modern-aurora-ui`)
+- **Commit SHA HEAD:** `fb21b33b0068ca6ec2484a0d92361099b2eb87c3`
+- **Lịch sử commit chính:**
   - `0c7bec8` — *feat(ui): implement modern aurora redesign, repair missing css, overhaul notification panel and users table pagination*
-  - Commit bổ sung — *feat(ui): complete modern aurora dashboard overhaul, eliminate bootstrap dependency, and add data resilience safeguards*
-- Remote repository: `https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC.git`
-- Lệnh đẩy nhánh lên GitHub:
-  ```bash
-  git push origin feat/edms-modern-aurora-ui
-  ```
+  - `e64cc16` — *feat(ui): complete modern aurora dashboard overhaul, eliminate bootstrap dependency, and add data resilience safeguards*
+  - `fb21b33` — *docs(ui): finalize dashboard repair & owner acceptance review document*
+- **Remote repository:** `https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC.git`
 
-### 2. Thông tin đối chiếu Pull Request
-- **Pull Request mục tiêu:** PR #14 (nhánh `feat/edms-ui-consistency-final`)
-- **Tình trạng:** Sẵn sàng hợp nhất vào PR #14 hoặc mở PR mới từ `feat/edms-modern-aurora-ui` vào `feat/edms-ui-consistency-final`.
+### 2. Thông tin Pull Request Chính Thức
+- **Pull Request:** [#15 — `feat(ui): modern aurora redesign, dashboard overhaul & data resilience safeguards`](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/pull/15)
+- **Nhánh cơ sở (Base):** `feat/edms-ui-consistency-final` (PR #14)
+- **Nhánh so sánh (Head):** `feat/edms-modern-aurora-ui`
+- **Trạng thái PR:** `DRAFT` (Đã mở trực tiếp trên GitHub, sẵn sàng hợp nhất khi Owner phê duyệt)
+
+### 3. Kết Quả Kiểm Tra CI (GitHub Actions)
+- **Workflow:** `EDMS CI - frontend and backend`
+- **CI Run URL:** [https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41227823689](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41227823689)
+- **Trạng thái CI:** `SUCCESS` (Thành công 100%)
+  - Job `Frontend typecheck and build` (ID 124615574368): **PASSED** (26s)
+  - Job `Backend unit tests and package` (ID 124615574193): **PASSED** (35s)
 
 ---
 
-## VI. KẾT LUẬN & TRẠNG THÁI NGHIỆM THU
+## VI. DANH SÁCH VẤN ĐỀ TỒN ĐỌNG & KIẾN NGHỊ (REMAINING ISSUES)
+
+1. **Backend Validation DTO (Ticket EDMS-CORE-104):**  
+   Cần bổ sung `@Pattern` hoặc enum `DocumentTypeEnum` tại Spring Boot `DocumentController` để chặn triệt để nguy cơ client truyền chuỗi bất thường trong tương lai.
+2. **Quyết định chuyển đổi dữ liệu lịch sử:**  
+   3 bản ghi ID 140, 141, 142 hiện đang được hiển thị an toàn trên giao diện. Đề nghị Owner xem xét có cần chạy Flyway migration `V2.1` để chuẩn hóa các bản ghi này về nhóm tài liệu nghiệp vụ tiêu chuẩn hay không.
+3. **Cảnh báo kích thước Vite Chunk:**  
+   File bundle `dist/assets/index-DRSfTM3O.js` hiện có dung lượng 544 kB (vượt mức khuyến nghị 500 kB). Kiến nghị áp dụng dynamic `import()` chia tách các trang (`React.lazy`) trong sprint tối ưu hóa hiệu năng kế tiếp.
+
+---
+
+## VII. KẾT LUẬN & TRẠNG THÁI NGHIỆM THU
 
 | Hạng mục kiểm tra | Tiêu chuẩn đánh giá | Kết quả thực tế | Trạng thái |
 |---|---|---|---|
@@ -246,9 +264,10 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 | **Row 3 — Activity Table** | Header, khoảng cách, font chữ, badge đồng bộ | Cột chuẩn, badge tiếng Việt + mã gốc | **ĐẠT** |
 | **Responsive Design** | Hiển thị chuẩn trên 1366, 768, 390, 375 | Co giãn mượt mà, table bọc cuộn ngang | **ĐẠT** |
 | **Dark Mode** | Sử dụng Navy và Slate, tương phản cao | Nền `#111D35`, viền `#1E2F52`, 0 chói | **ĐẠT** |
-| **Console Errors** | Không có lỗi JavaScript / Network | `Console Errors caught: []` | **ĐẠT** |
+| **Git & PR Status** | PR #15 đã mở trên GitHub, CI 100% Green | Draft PR #15 & Run #41227823689 | **ĐẠT** |
 
 **KẾT LUẬN:** Toàn bộ các tiêu chí kỹ thuật và thẩm mỹ Modern Aurora đã hoàn thành 100%. Hệ thống sẵn sàng cho Owner trực tiếp xem xét và phê duyệt.
 
 **Trạng thái cuối cùng:** `READY_FOR_OWNER_REVIEW`
+
 
