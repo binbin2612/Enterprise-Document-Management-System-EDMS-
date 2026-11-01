@@ -242,13 +242,14 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ### 1. Trạng thái Git Local & Remote
 - **Nhánh thực hiện:** `feat/edms-modern-aurora-ui` (tracking `origin/feat/edms-modern-aurora-ui`)
-- **Commit SHA HEAD:** `eb90231` (sau khi giải quyết triệt để 6 Blockers của Owner)
+- **Commit SHA HEAD:** `cc6a464` (sau khi giải quyết triệt để 6 Blockers của Owner)
 - **Lịch sử commit chính:**
   - `0c7bec8` — *feat(ui): implement modern aurora redesign, repair missing css, overhaul notification panel and users table pagination*
   - `e64cc16` — *feat(ui): complete modern aurora dashboard overhaul, eliminate bootstrap dependency, and add data resilience safeguards*
   - `fb21b33` — *docs(ui): finalize dashboard repair & owner acceptance review document*
   - `9be8367` — *docs(review): record PR 15 URL, CI run URL and remaining issues list*
   - `eb90231` — *fix(ui): cleanly isolate modern aurora ui from docker/qa infrastructure, resolve all owner blockers*
+  - `cc6a464` — *docs(review): document resolution of 6 owner review blockers, forensic proof and isolated pr scope*
 - **Remote repository:** `https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC.git`
 
 ### 2. Thông tin Pull Request Chính Thức
@@ -259,10 +260,10 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ### 3. Kết Quả Kiểm Tra CI (GitHub Actions)
 - **Workflow:** `EDMS CI - frontend and backend`
-- **CI Run URL:** [https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41227823689](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41227823689)
+- **CI Run URL:** [https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41314602730](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41314602730)
 - **Trạng thái CI:** `SUCCESS` (Thành công 100%)
-  - Job `Frontend typecheck and build` (ID 124615574368): **PASSED** (26s)
-  - Job `Backend unit tests and package` (ID 124615574193): **PASSED** (35s)
+  - Job `Frontend typecheck and build` (ID 124871883712): **PASSED** (28s)
+  - Job `Backend unit tests and package` (ID 124871884309): **PASSED** (33s)
 
 ---
 
