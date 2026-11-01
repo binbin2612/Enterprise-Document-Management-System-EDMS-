@@ -177,6 +177,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               value={role}
               onChange={(e) => setRole(e.target.value)}
             >
+              <option value="ROLE_USER">ROLE_USER (Người dùng cơ bản)</option>
               <option value="ROLE_STAFF">ROLE_STAFF (Chuyên viên)</option>
               <option value="ROLE_ADMIN">ROLE_ADMIN (Quản trị viên)</option>
             </select>

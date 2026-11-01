@@ -28,22 +28,22 @@ Trên giao diện Dashboard trước đây, tại biểu đồ phân loại tài
 - `b'%PDF-1.4 For tin to submit'` (1 tài liệu)
 - `b'%PDF-1.4 Content draft for Phase 7 review'` (1 tài liệu)
 
-### 2. Kết quả truy vấn cơ sở dữ liệu QA
+### 2. Kết quả truy vấn cơ sở dữ liệu QA (SQL Đúng Schema)
 Truy vấn trực tiếp trên container PostgreSQL `edms-postgres`, cơ sở dữ liệu `edms_db`:
 
 ```sql
-SELECT id, title, document_type, file_name, created_at, content_type 
+SELECT id, title, description, document_type, original_file_name, stored_file_name, content_type, file_size, access_mode, created_by, created_at 
 FROM documents 
 WHERE document_type LIKE 'b''%' 
 ORDER BY id;
 ```
 
-**Kết quả trả về:**
-| ID | Title | Document Type | File Name | Created At | Content Type |
-|---|---|---|---|---|---|
-| **140** | Review Test Doc 7d98f3 | `b'%PDF-1.4 Content draft for Phase 7 review'` | `report_draft.pdf` | 2026-09-20 18:04:12+00 | `application/pdf` |
-| **141** | Doc Shared for Tin cfaced | `b'%PDF-1.4 For tin to submit'` | `shared_tin.pdf` | 2026-09-20 18:04:13+00 | `application/pdf` |
-| **142** | Doc Read Only 10abfd | `b'%PDF-1.4 Read only content'` | `readonly.pdf` | 2026-09-20 18:04:14+00 | `application/pdf` |
+**Bằng chứng dữ liệu thực tế trích xuất từ PostgreSQL:**
+| ID | Title | Description | Document Type | Original File Name | Stored File Name | Content Type | File Size | Access Mode | Created By | Created At |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **140** | Review Test Doc 7d98f3 | `report_draft.pdf` | `b'%PDF-1.4 Content draft for Phase 7 review'` | `test.pdf` | `9c2c1c27-..._1789879113607.pdf` | `application/pdf` | `23` | `INTERNAL` | `hieu` | 2026-09-20 04:38:33+00 |
+| **141** | Doc Shared for Tin cfaced | `shared_tin.pdf` | `b'%PDF-1.4 For tin to submit'` | `test.pdf` | `a9bd6557-..._1789879113918.pdf` | `application/pdf` | `23` | `INTERNAL` | `hieu` | 2026-09-20 04:38:33+00 |
+| **142** | Doc Read Only 10abfd | `readonly.pdf` | `b'%PDF-1.4 Read only content'` | `test.pdf` | `5a7633f9-..._1789879114014.pdf` | `application/pdf` | `23` | `INTERNAL` | `hieu` | 2026-09-20 04:38:34+00 |
 
 Tổng số tài liệu trong hệ thống là **3.661**, trong đó:
 - `Báo cáo`: 3.431 tài liệu (94%)
@@ -53,23 +53,45 @@ Tổng số tài liệu trong hệ thống là **3.661**, trong đó:
 - `Quyết định`: 1 tài liệu (< 1%)
 - 3 bản ghi ID 140, 141, 142: mỗi loại 1 tài liệu (< 1%)
 
-### 3. Nguyên nhân gốc rễ (Root Cause)
-1. **Lỗi truyền tham số trong script kiểm thử hồi quy:**  
-   Vào ngày 20/09/2026, khi chạy bộ kịch bản kiểm thử tích hợp (Tests 105, 107, 108 trong `test_regression.py`), hàm trợ giúp `upload_doc_p6_helper` được định nghĩa với thứ tự tham số:
+### 3. Nguyên nhân gốc rễ (Forensics & Historical Evidence)
+Phân tích lịch sử Git và chữ ký hàm trong `test_regression.py`:
+1. **Chữ ký hàm `upload_doc_p6_helper` (tại dòng 1472 của `test_regression.py`):**
    ```python
-   def upload_doc_p6_helper(token, title, description, doc_type, file_content, filename):
+   def upload_doc_p6_helper(
+       token, 
+       title, 
+       description="Test Desc", 
+       doc_type="Báo cáo", 
+       filename="test.pdf", 
+       access_mode="INTERNAL", 
+       content=b"Initial file content v1", 
+       content_type="application/pdf", 
+       extra_headers=None
+   ):
    ```
-   Tuy nhiên, tại các ca kiểm thử nói trên, lời gọi hàm đã truyền nhầm thứ tự:
+2. **Bằng chứng truyền tham số theo vị trí (Positional Argument Mismatch):**  
+   Tại phiên chạy kiểm thử hồi quy sớm ngày 20/09/2026, hàm `upload_doc_p6_helper` đã được gọi với 4 tham số theo thứ tự vị trí:
    ```python
-   # Lời gọi lỗi: truyền nội dung file byte string vào vị trí của doc_type
-   upload_doc_p6_helper(token, title, filename, b"%PDF-1.4 Read only content", ...)
+   upload_doc_p6_helper(token, title, "report_draft.pdf", b"%PDF-1.4 Content draft for Phase 7 review")
    ```
-2. **Backend thiếu Enum Validation tại tầng tiếp nhận Multipart:**  
-   Trong Spring Boot `DocumentController.java`, endpoint tiếp nhận upload khai báo:
-   ```java
-   @RequestParam("documentType") String documentType
+   Cơ chế gán tham số của Python đã ánh xạ:
+   - Vị trí 1 -> `token`
+   - Vị trí 2 -> `title`
+   - Vị trí 3 -> tham số thứ ba `description` (nhận giá trị chuỗi `"report_draft.pdf"`)
+   - Vị trí 4 -> tham số thứ tư `doc_type` (nhận giá trị chuỗi byte `b"%PDF-1.4 Content draft..."`)
+   - Tham số thứ năm `filename` không truyền -> nhận giá trị mặc định `"test.pdf"` (được lưu vào cột `original_file_name`)
+   - Tham số thứ sáu `access_mode` không truyền -> nhận giá trị mặc định `"INTERNAL"`
+   - Tham số thứ bảy `content` không truyền -> nhận nội dung mặc định `b"Initial file content v1"`
+3. **Bằng chứng toán học xác thực 100%:**  
+   Độ dài của chuỗi byte mặc định `b"Initial file content v1"` là **đúng 23 bytes** (`len(b"Initial file content v1") == 23`). Cột `file_size` trong database của cả 3 bản ghi 140, 141, 142 đều có giá trị **chính xác là 23**! Điều này chứng minh tuyệt đối rằng tệp thực tế được upload lúc đó chính là chuỗi byte mặc định của hàm, trong khi nội dung PDF draft bị nạp nhầm vào trường `doc_type`.
+4. **Hiệu chỉnh trong mã nguồn:**  
+   Sau phiên chạy đó, tác giả đã phát hiện và sửa lại lời gọi thành keyword arguments tại các dòng 1831, 1861, 1872 trong `test_regression.py`:
+   ```python
+   upload_doc_p6_helper(token, f"Review Test Doc ...", filename="report_draft.pdf", content=b"%PDF-1.4 Content...")
    ```
-   Tham số này nhận bất kỳ chuỗi `String` nào từ client mà không đi qua bộ lọc danh mục tài liệu hợp lệ (`DocumentTypeEnum`), do đó chuỗi raw byte đã được lưu thẳng vào cột `documents.document_type` kiểu `VARCHAR`.
+   Tuy nhiên, 3 bản ghi lịch sử tạo ngày 20/09/2026 vẫn lưu lại trong cơ sở dữ liệu `edms_db`.
+5. **Backend tiếp nhận Multipart tự do:**  
+   Trong Spring Boot `DocumentController.java`, endpoint tiếp nhận upload khai báo `@RequestParam("documentType") String documentType` nhận chuỗi tự do mà không validate danh mục hợp lệ, dẫn đến chuỗi raw byte được lưu thẳng vào cột `documents.document_type` kiểu `VARCHAR`.
 
 ### 4. Cam kết bảo toàn dữ liệu & Phương án giải quyết
 - **Tuyệt đối tuân thủ quy tắc:** Đội ngũ QA/Frontend **KHÔNG** thực thi bất kỳ câu lệnh `UPDATE` hay `DELETE` nào trên database PostgreSQL `edms_db`. Dữ liệu gốc được bảo lưu 100%.
@@ -77,14 +99,14 @@ Tổng số tài liệu trong hệ thống là **3.661**, trong đó:
   - **Sanitization & Truncation:** Nếu tên loại tài liệu vượt quá 26 ký tự hoặc bắt đầu bằng tiền tố nhị phân `b'`, UI tự động rút gọn hiển thị dạng `b'%PDF-1.4 Read only co...'` với `text-overflow: ellipsis; max-width: 200px` để không làm lệch thanh tỷ lệ hoặc đè lên số lượng.
   - **Tooltip minh bạch:** Thêm thuộc tính `title="Tên phân loại: b'%PDF-1.4 Read only content'"` trên thẻ span để người dùng và kiểm toán viên khi hover chuột vẫn xem được đầy đủ 100% dữ liệu gốc trong DB.
   - **Gom nhóm tỷ trọng:** Phân loại hiển thị tối đa 6 nhóm có số lượng lớn nhất, các nhóm nhỏ còn lại được cộng dồn và gom gọn thành nhóm `Khác (hệ thống / khác)` với tooltip liệt kê chi tiết các thành phần.
-- **Đề xuất Ticket Backend & Migration (Dành cho Sprint tiếp theo):**
+- **Đề xuất Ticket Backend & Migration (Dành cho Sprint tiếp theo, CHỜ OWNER PHÊ DUYỆT):**
   - **Ticket EDMS-CORE-104:** Bổ sung validator `@Pattern` hoặc enum `DocumentTypeEnum` tại Spring Boot DTO.
-  - **Migration Script (Chờ Owner duyệt):**
+  - **Migration Script (Dự thảo, KHÔNG CHẠY TRONG PHẠM VI NÀY):**
     ```sql
     -- V2.1__normalize_legacy_document_types.sql (Dự kiến, CHƯA CHẠY)
-    UPDATE documents SET document_type = 'Báo cáo' WHERE id = 140;
-    UPDATE documents SET document_type = 'Công văn' WHERE id = 141;
-    UPDATE documents SET document_type = 'Tài liệu khác' WHERE id = 142;
+    UPDATE documents SET document_type = 'Báo cáo', description = 'Nội dung dự thảo xét duyệt Phase 7' WHERE id = 140;
+    UPDATE documents SET document_type = 'Báo cáo', description = 'Tài liệu chia sẻ cho tin xét duyệt' WHERE id = 141;
+    UPDATE documents SET document_type = 'Báo cáo', description = 'Tài liệu chia sẻ chỉ đọc' WHERE id = 142;
     ```
 
 ---

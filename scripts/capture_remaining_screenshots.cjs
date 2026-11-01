@@ -19,10 +19,12 @@ async function captureRemaining() {
 
   try {
     // Login
+    const adminUser = process.env.EDMS_ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.EDMS_ADMIN_PASSWORD || '123';
     await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     await page.waitForSelector('#username-input');
-    await page.type('#username-input', 'admin');
-    await page.type('#password-input', '123');
+    await page.type('#username-input', adminUser);
+    await page.type('#password-input', adminPass);
     await page.click('button[type="submit"]');
     await page.waitForSelector('.ent-sidebar', { timeout: 10000 });
     await new Promise(r => setTimeout(r, 1000));
@@ -100,6 +102,7 @@ async function captureRemaining() {
     console.log('REMAINING SCREENSHOTS CAPTURED SUCCESSFULLY!');
   } catch (err) {
     console.error('Error during captureRemaining:', err);
+    process.exit(1);
   } finally {
     await browser.close();
   }

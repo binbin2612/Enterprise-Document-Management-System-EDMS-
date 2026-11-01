@@ -1,3 +1,0 @@
-HỢP ĐỒNG ĐIỆN TỬ EDMS THỰC NGHIỆM
-Số: 01/2026/EDMS-QA
-Nội dung: Tài liệu thử nghiệm kiểm thử hệ thống EDMS Docker thực tế.

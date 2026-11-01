@@ -27,11 +27,13 @@ async function runDashboardTests() {
 
   try {
     // 1. Login
-    console.log('Logging in as admin...');
+    const adminUser = process.env.EDMS_ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.EDMS_ADMIN_PASSWORD || '123';
+    console.log(`Logging in as ${adminUser}...`);
     await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     await page.waitForSelector('#username-input', { timeout: 8000 });
-    await page.type('#username-input', 'admin');
-    await page.type('#password-input', '123');
+    await page.type('#username-input', adminUser);
+    await page.type('#password-input', adminPass);
     await page.click('button[type="submit"]');
     await page.waitForSelector('.ent-sidebar', { timeout: 10000 });
     console.log('✅ Logged in successfully.');
@@ -112,6 +114,7 @@ async function runDashboardTests() {
     console.log('\n🎉 ALL DASHBOARD SCREENSHOTS & AUDITS COMPLETED SUCCESSFULLY!');
   } catch (err) {
     console.error('❌ Error during Dashboard tests:', err);
+    process.exit(1);
   } finally {
     await browser.close();
   }
