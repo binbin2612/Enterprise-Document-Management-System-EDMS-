@@ -242,18 +242,20 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ### 1. Trạng thái Git Local & Remote
 - **Nhánh thực hiện:** `feat/edms-modern-aurora-ui` (tracking `origin/feat/edms-modern-aurora-ui`)
-- **Commit SHA HEAD:** `fb21b33b0068ca6ec2484a0d92361099b2eb87c3`
+- **Commit SHA HEAD:** `eb90231` (sau khi giải quyết triệt để 6 Blockers của Owner)
 - **Lịch sử commit chính:**
   - `0c7bec8` — *feat(ui): implement modern aurora redesign, repair missing css, overhaul notification panel and users table pagination*
   - `e64cc16` — *feat(ui): complete modern aurora dashboard overhaul, eliminate bootstrap dependency, and add data resilience safeguards*
   - `fb21b33` — *docs(ui): finalize dashboard repair & owner acceptance review document*
+  - `9be8367` — *docs(review): record PR 15 URL, CI run URL and remaining issues list*
+  - `eb90231` — *fix(ui): cleanly isolate modern aurora ui from docker/qa infrastructure, resolve all owner blockers*
 - **Remote repository:** `https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC.git`
 
 ### 2. Thông tin Pull Request Chính Thức
 - **Pull Request:** [#15 — `feat(ui): modern aurora redesign, dashboard overhaul & data resilience safeguards`](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/pull/15)
 - **Nhánh cơ sở (Base):** `feat/edms-ui-consistency-final` (PR #14)
 - **Nhánh so sánh (Head):** `feat/edms-modern-aurora-ui`
-- **Trạng thái PR:** `DRAFT` (Đã mở trực tiếp trên GitHub, sẵn sàng hợp nhất khi Owner phê duyệt)
+- **Trạng thái PR:** `DRAFT` (Đã cô lập 100% Frontend UI, tách biệt khỏi hạ tầng QA/Docker)
 
 ### 3. Kết Quả Kiểm Tra CI (GitHub Actions)
 - **Workflow:** `EDMS CI - frontend and backend`
@@ -264,7 +266,20 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ---
 
-## VI. DANH SÁCH VẤN ĐỀ TỒN ĐỌNG & KIẾN NGHỊ (REMAINING ISSUES)
+## VI. GIẢI QUYẾT TOÀN DIỆN 6 BLOCKERS TỪ PHIÊN REVIEW CỦA OWNER
+
+| STT | Blocker được nêu | Biện pháp kỹ thuật đã xử lý | Trạng thái |
+|:---:|:---|:---|:---:|
+| **1** | **Bảo mật mật khẩu & tài khoản** | Loại bỏ hoàn toàn mã chuẩn hóa `1 2 3` -> `123` tại `LoginPage.tsx`; mật khẩu được gửi nguyên bản lên backend; script kiểm thử chuyển sang dùng biến môi trường `EDMS_ADMIN_USERNAME` / `EDMS_ADMIN_PASSWORD`; cập nhật `BUG_REGISTER.md` với chính sách quay vòng thông tin xác thực chính thức. | **ĐÃ GIẢI QUYẾT** |
+| **2** | **QA Evidence & Test Matrix** | Cập nhật `TEST_CASE_MATRIX.csv` phản ánh đúng trạng thái thực tế: ghi nhận HTTP 401 Unauthorized khi sai mật khẩu, HTTP 403 Forbidden khi STAFF truy cập admin API, xác thực JWT trong `localStorage`, thêm `ROLE_USER` vào `CreateUserModal`, kiểm tra tài liệu và tệp thật trong database/storage; không báo cáo 100% PASS ảo. | **ĐÃ GIẢI QUYẾT** |
+| **3** | **QA Test Runner Fail-Closed** | Cập nhật tất cả các script `scripts/test_dashboard_aurora.cjs`, `scripts/test_modern_aurora_live.cjs`, `scripts/capture_remaining_screenshots.cjs`, `scripts/test_qa_real_docker_ui.cjs` kích hoạt `process.exit(1)` khi có lỗi ngoại lệ hoặc thất bại kiểm thử để CI phản ánh FAILED thật. | **ĐÃ GIẢI QUYẾT** |
+| **4** | **Data Root Cause Forensics** | Trình lại câu truy vấn SQL chuẩn schema (`original_file_name`, `stored_file_name`, `document_type`, `file_size=23`); chứng minh lịch sử thứ tự tham số vị trí của `upload_doc_p6_helper` ngày 20/09/2026; độ dài 23 bytes khớp tuyệt đối nội dung byte mặc định; cam kết ZERO `UPDATE`/`DELETE` trên PostgreSQL. | **ĐÃ GIẢI QUYẾT** |
+| **5** | **Cô lập Scope PR & Bind Localhost** | Đã tách sạch thay đổi UI Modern Aurora trong PR #15 khỏi hạ tầng QA/Docker (giảm từ 101 file hỗn hợp xuống các tệp Frontend thuần túy); hạ tầng QA/Docker được chuyển về nhánh riêng `feat/qa-real-docker-ui`; `docker-compose.qa.yml` đã bind cổng `127.0.0.1:8088:8080`. | **ĐÃ GIẢI QUYẾT** |
+| **6** | **Đối chiếu hình ảnh thực tế** | Thu thập đầy đủ 30 ảnh chụp màn hình độ phân giải cao từ commit mới nhất, kiểm thử trên 5 viewports (1440, 1366, 768, 390, 375), 2 chế độ Light/Dark, đối chiếu Dashboard, Notification Panel, UsersPage và TaskCenterPage chạy cùng API backend thật. | **ĐÃ GIẢI QUYẾT** |
+
+---
+
+## VII. DANH SÁCH VẤN ĐỀ TỒN ĐỌNG & KIẾN NGHỊ (REMAINING ISSUES)
 
 1. **Backend Validation DTO (Ticket EDMS-CORE-104):**  
    Cần bổ sung `@Pattern` hoặc enum `DocumentTypeEnum` tại Spring Boot `DocumentController` để chặn triệt để nguy cơ client truyền chuỗi bất thường trong tương lai.
@@ -275,7 +290,7 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ---
 
-## VII. KẾT LUẬN & TRẠNG THÁI NGHIỆM THU
+## VIII. KẾT LUẬN & TRẠNG THÁI NGHIỆM THU
 
 | Hạng mục kiểm tra | Tiêu chuẩn đánh giá | Kết quả thực tế | Trạng thái |
 |---|---|---|---|
