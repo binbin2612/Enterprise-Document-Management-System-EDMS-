@@ -36,9 +36,9 @@ const FIXTURES_DIR = path.join(OUT_DIR, 'fixtures');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
-// Read .env.qa for secrets
-let adminUsername = 'qa_admin';
-let adminPassword = '';
+// Read environment or .env.qa for secrets
+let adminUsername = process.env.EDMS_ADMIN_USERNAME || process.env.EDMS_TEAM_ADMIN_USERNAME || 'qa_admin';
+let adminPassword = process.env.EDMS_ADMIN_PASSWORD || process.env.EDMS_TEAM_ADMIN_PASSWORD || '';
 if (fs.existsSync('.env.qa')) {
   const envContent = fs.readFileSync('.env.qa', 'utf8');
   envContent.split('\n').forEach(line => {
@@ -591,8 +591,13 @@ async function main() {
     // Export Logs
     fs.writeFileSync(path.join(LOGS_DIR, 'browser_console.log'), consoleErrors.join('\n'), 'utf8');
 
+    if (failCount > 0) {
+      console.error(`⚠️ Test suite completed with ${failCount} FAILED test(s).`);
+      process.exit(1);
+    }
   } catch (error) {
     console.error('Test Suite encountered fatal error:', error);
+    process.exit(1);
   } finally {
     await browser.close();
   }

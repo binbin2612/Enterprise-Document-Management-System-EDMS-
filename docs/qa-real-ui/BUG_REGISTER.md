@@ -39,14 +39,18 @@
 
 ---
 
-### BUG-003: Khó khăn đăng nhập do mật khẩu kiểm thử phức tạp và ký tự dấu cách
-- **Mức độ:** `MAJOR`
-- **Thành phần:** `users` table & `frontend/src/pages/LoginPage.tsx`
-- **Mô tả:** Ban đầu mật khẩu khởi tạo ngẫu nhiên dài hơn 16 ký tự khiến người dùng khó thao tác trực tiếp trên trình duyệt máy thật. Khi người dùng nhập `1 2 3` (có khoảng trắng) hoặc `123`, việc đăng nhập bị lỗi.
-- **Cách khắc phục:**
-  1. Sử dụng hàm băm `pgcrypto` (`crypt('123', gen_salt('bf', 10))`) cập nhật mật khẩu cho tất cả tài khoản chuẩn (`admin`, `staff`, `user`, `hieu`) về giá trị đơn giản `123`.
-  2. Bổ sung bộ lọc chuẩn hóa tại `LoginPage.tsx`: tự động nhận diện nếu người dùng nhập `1 2 3` thì chuyển thành `123` trước khi gửi lên API Backend.
-- **Trạng thái:** `VERIFIED_FIXED` (Đã kiểm thử trình duyệt thực tế cả 2 trường hợp `123` và `1 2 3`, đăng nhập thành công 100%).
+### BUG-003: Xử lý mật khẩu đúng chuẩn bảo mật và kế hoạch quay vòng thông tin xác thực
+- **Mức độ:** `CRITICAL` (Bảo mật thông tin & Kiểm thử tự động)
+- **Thành phần:** `frontend/src/pages/LoginPage.tsx`, kịch bản kiểm thử `scripts/`, chính sách tài khoản
+- **Mô tả:** Trong các phiên gỡ lỗi trước, hệ thống đã từng áp dụng biện pháp tạm thời (chuẩn hóa `1 2 3` -> `123` tại client và đặt mật khẩu debug `123`). Điều này tiềm ẩn rủi ro bảo mật nghiêm trọng nếu để lọt vào kịch bản dùng chung và vi phạm nguyên tắc toàn vẹn dữ liệu xác thực (không được biến đổi mật khẩu người dùng tại frontend).
+- **Cách khắc phục triệt để:**
+  1. **Khôi phục tính nguyên bản tại Frontend:** Loại bỏ hoàn toàn logic ép kiểu hoặc biến đổi chuỗi `1 2 3` -> `123` trong `LoginPage.tsx`. Mật khẩu do người dùng nhập được chuyển giao nguyên bản 100% đến API backend qua giao thức bảo mật.
+  2. **Loại bỏ hardcode trong kịch bản kiểm thử:** Cập nhật toàn bộ script kiểm thử tự động (`scripts/*.cjs`) đọc thông tin đăng nhập từ biến môi trường `EDMS_ADMIN_USERNAME` và `EDMS_ADMIN_PASSWORD` (với fallback kiểm tra có kiểm soát), không hardcode mật khẩu yếu trong kho mã nguồn.
+  3. **Kế hoạch quay vòng mật khẩu (Credential Rotation Plan):**
+     - Toàn bộ tài khoản chuẩn (`admin`, `staff`, `user`, `hieu`) trên môi trường QA và Staging phải được cập nhật mật khẩu mạnh (tối thiểu 16 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt) thông qua cấu hình bí mật môi trường `EDMS_TEAM_ADMIN_PASSWORD` và quy trình khởi tạo chính thức.
+     - Nghiêm cấm mọi hành vi tự ý chạy câu lệnh UPDATE mật khẩu hoặc can thiệp database ngoài phạm vi quy trình QA được phê duyệt.
+     - Các tài khoản QA cô lập (`qa_admin`, `qa_staff`, `qa_user`) được cấp phát mật khẩu mạnh độc lập và thu hồi sau khi hoàn tất chu kỳ kiểm thử.
+- **Trạng thái:** `VERIFIED_FIXED` (Đã loại bỏ mã chuẩn hóa tại LoginPage, cấu hình env cho script kiểm thử và ban hành kế hoạch bảo mật).
 
 ---
 

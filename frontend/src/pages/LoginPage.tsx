@@ -50,8 +50,7 @@ export const LoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const normalizedPassword = password.trim() === '1 2 3' ? '123' : password;
-      await login({ username: username.trim(), password: normalizedPassword });
+      await login({ username: username.trim(), password });
     } catch (err: any) {
       const resData = err.response?.data;
       const status = err.response?.status;
