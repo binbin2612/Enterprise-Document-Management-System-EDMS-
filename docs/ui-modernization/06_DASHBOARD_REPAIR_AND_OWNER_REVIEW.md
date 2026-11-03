@@ -222,7 +222,7 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
 
 ### 1. Trạng thái Git Local & Remote
 - **Nhánh thực hiện:** `feat/edms-modern-aurora-ui` (tracking `origin/feat/edms-modern-aurora-ui`)
-- **Commit SHA HEAD:** `cc6a464` (sau khi giải quyết triệt để 6 Blockers của Owner)
+- **Commit SHA HEAD:** `3cde8ae` (Đã giải quyết dứt điểm 5 yêu cầu từ Owner Review 03/11/2026)
 - **Lịch sử commit chính:**
   - `0c7bec8` — *feat(ui): implement modern aurora redesign, repair missing css, overhaul notification panel and users table pagination*
   - `e64cc16` — *feat(ui): complete modern aurora dashboard overhaul, eliminate bootstrap dependency, and add data resilience safeguards*
@@ -230,20 +230,22 @@ Kịch bản `scripts/test_modern_aurora_live.cjs` đã chạy lại toàn bộ 
   - `9be8367` — *docs(review): record PR 15 URL, CI run URL and remaining issues list*
   - `eb90231` — *fix(ui): cleanly isolate modern aurora ui from docker/qa infrastructure, resolve all owner blockers*
   - `cc6a464` — *docs(review): document resolution of 6 owner review blockers, forensic proof and isolated pr scope*
+  - `f3b38f8` — *docs(ci): update ci run url and commit sha in review report*
+  - `3cde8ae` — *fix(qa): enforce strict env credentials without fallbacks, fail-closed test runners, sync qa docs and classify hypothesis*
 - **Remote repository:** `https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC.git`
 
 ### 2. Thông tin Pull Request Chính Thức
 - **Pull Request:** [#15 — `feat(ui): modern aurora redesign, dashboard overhaul & data resilience safeguards`](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/pull/15)
 - **Nhánh cơ sở (Base):** `feat/edms-ui-consistency-final` (PR #14)
 - **Nhánh so sánh (Head):** `feat/edms-modern-aurora-ui`
-- **Trạng thái PR:** `DRAFT` (Đã cô lập 100% Frontend UI, tách biệt khỏi hạ tầng QA/Docker)
+- **Trạng thái PR:** `DRAFT` (Sẵn sàng nghiệm thu, không merge tự động)
 
 ### 3. Kết Quả Kiểm Tra CI (GitHub Actions)
 - **Workflow:** `EDMS CI - frontend and backend`
-- **CI Run URL:** [https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41314602730](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41314602730)
+- **CI Run URL:** [https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41616258340](https://github.com/hieuvo123ab-rgb/DoAn_CNPMNC/actions/runs/41616258340)
 - **Trạng thái CI:** `SUCCESS` (Thành công 100%)
-  - Job `Frontend typecheck and build` (ID 124871883712): **PASSED** (28s)
-  - Job `Backend unit tests and package` (ID 124871884309): **PASSED** (33s)
+  - Job `Frontend typecheck and build` (ID 125850358237): **PASSED** (34s)
+  - Job `Backend unit tests and package` (ID 125850357457): **PASSED** (35s)
 
 ---
 
