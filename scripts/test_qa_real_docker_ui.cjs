@@ -52,6 +52,11 @@ if (fs.existsSync('.env.qa')) {
   });
 }
 
+if (!adminUsername || !adminPassword) {
+  console.error('❌ FATAL: Environment variables EDMS_ADMIN_USERNAME and EDMS_ADMIN_PASSWORD (or .env.qa) are required (no fallback allowed).');
+  process.exit(1);
+}
+
 const staffUser = {
   username: 'qa_staff',
   password: 'QaStaff_Pass123456!',

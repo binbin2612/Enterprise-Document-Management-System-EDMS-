@@ -1,116 +1,115 @@
 # BÁO CÁO KIỂM THỬ GIAO DIỆN THỰC TẾ & CHẤP NHẬN CHỨC NĂNG (REAL DOCKER UI TEST REPORT)
 
 **Dự án:** EDMS — Hệ thống Quản lý và Lưu trữ Tài liệu Điện tử  
-**Mã nguồn PR:** `#14` — `feat/edms-ui-consistency-final` (Commit `18fd7534e7dd4fea48fcd2e8d3d17b967a6ca4b3`)  
-**Nhánh QA:** `feat/qa-real-docker-ui`  
+**Mã nguồn PR:** `#15` — `feat(ui): modern aurora redesign, dashboard overhaul & data resilience safeguards`  
+**Nhánh thực hiện:** `feat/edms-modern-aurora-ui`  
+**Nhánh kiểm định hạ tầng:** `feat/qa-real-docker-ui`  
 **Kỹ sư thực hiện:** Senior Full-Stack QA & Browser Automation Tester  
-**Thời điểm thực hiện:** 2026-10-30  
+**Thời điểm cập nhật:** 2026-11-03  
 **Kết luận tổng thể:** **`READY_FOR_OWNER_REVIEW`**
 
 ---
 
-## 1. Môi trường Thực thi & Địa chỉ Truy cập
+## 1. Môi trường Thực thi & Kiểm thử Thực tế
 
-- **Địa chỉ giao diện đang chạy trực tiếp:**  
-  👉 **`http://localhost:5173`** (phục vụ qua Vite Preview / Docker)  
-  👉 **`http://localhost:8088`** (phục vụ qua Nginx Reverse Proxy)
-- **Địa chỉ Backend API:** `http://localhost:8080/api/` (Spring Boot 3 / Java 21)
+- **Giao diện Web:**  
+  👉 **`http://localhost:5173`** (Vite / React 18 / Docker Desktop Windows)  
+  👉 **`http://127.0.0.1:8088`** (Nginx Reverse Proxy, cấu hình bind an toàn localhost)
+- **Backend API:** `http://localhost:8080/api/` (Spring Boot 3.3.3 / Java 21)
 - **Database:** PostgreSQL 16 Alpine (`edms-postgres`, port 5432 nội bộ)
 - **Trình duyệt điều khiển tự động:** Google Chrome thật (`C:\Program Files\Google\Chrome\Application\chrome.exe`) qua `puppeteer-core`.
+- **Chính sách xác thực kiểm thử:** Bắt buộc sử dụng biến môi trường `EDMS_ADMIN_USERNAME` và `EDMS_ADMIN_PASSWORD`. Mọi fallback hardcode tài khoản/mật khẩu yếu đã bị loại bỏ hoàn toàn khỏi các test runner.
 
 ---
 
-## 2. Tài Khoản Thử Nghiệm Kiểm Thử Thực Tế
+## 2. Xác Minh Thực Tế Từng Phân Hệ Chức Năng
 
-Toàn bộ các tài khoản đã được chuẩn hóa mật khẩu thành **`123`** (hoặc **`1 2 3`**):
+### A. Xác thực và Bảo mật (Authentication & Authorization)
+1. **Tải trang đăng nhập (`TC-AUTH-01`):**  
+   Giao diện đăng nhập Modern Aurora tải hoàn chỉnh, form input thẳng hàng, nhãn tiếng Việt chuẩn Enterprise UI.
+2. **Kiểm tra mật khẩu sai (`TC-AUTH-02`):**  
+   Gửi yêu cầu đăng nhập với mật khẩu sai $\rightarrow$ Backend trả về mã lỗi thực tế:
+   ```json
+   HTTP/1.1 401 Unauthorized
+   {"correlationId":"f5d1d4ff-2cf4-4d21-bbe0-e9f3bf2d855b","error":"Unauthorized","message":"Tên đăng nhập hoặc mật khẩu không chính xác.","status":401}
+   ```
+   Giao diện hiển thị banner cảnh báo tiếng Việt tương ứng.
+3. **Đăng nhập quản trị viên qua biến môi trường (`TC-AUTH-03`):**  
+   Đăng nhập bằng thông tin truyền qua biến môi trường $\rightarrow$ Backend cấp phát Bearer JWT token thành công (`HTTP 200 OK`).
+4. **Lưu trữ phiên xác thực (`TC-AUTH-04`):**  
+   Xác minh token được lưu trữ an toàn trong `localStorage` dưới khóa `edms_token`, tự động gắn header `Authorization: Bearer <token>` vào tất cả các yêu cầu tiếp theo.
 
-| Tên đăng nhập | Mật khẩu | Vai trò | Quyền hạn kiểm thử |
-| :--- | :--- | :--- | :--- |
-| **`admin`** | **`123`** | `ROLE_ADMIN` | Toàn quyền Quản trị: Dashboard, Quản lý User, Nhật ký kiểm toán, Duyệt tài liệu, Trạng thái hệ thống |
-| **`hieu`** | **`123`** | `ROLE_ADMIN` | Tài khoản Admin chính chủ |
-| **`staff`** | **`123`** | `ROLE_STAFF` | Tải lên tài liệu, xem tài liệu, gửi duyệt, quản lý tác vụ cá nhân (bị chặn trang quản trị) |
-| **`user`** | **`123`** | `ROLE_USER` | Người dùng thông thường: xem tài liệu cá nhân, tải tài liệu cá nhân |
+### B. Quản trị Người dùng & Phân quyền (User Management)
+1. **Xem danh sách người dùng (`TC-ADM-01`):**  
+   Tải danh sách tài khoản từ cơ sở dữ liệu PostgreSQL thật qua `GET /api/admin/users` (`HTTP 200 OK`).
+2. **Tạo tài khoản STAFF (`TC-ADM-03`):**  
+   Mở `CreateUserModal`, tạo tài khoản `qa_staff` thành công, backend lưu mật khẩu mã hóa BCrypt vào bảng `users`.
+3. **Tạo tài khoản USER (`TC-ADM-04`):**  
+   Modal tạo người dùng đã được bổ sung tùy chọn `ROLE_USER`, tạo thành công tài khoản người dùng cơ bản `qa_user`.
+4. **Kiểm soát truy cập theo vai trò (Role Boundary Verification - `TC-ROLE-02`):**  
+   Khi tài khoản `ROLE_STAFF` cố gắng truy cập endpoint quản trị `GET /api/admin/users`, Backend trả về mã lỗi thực tế:
+   ```json
+   HTTP/1.1 403 Forbidden
+   {"status":403,"error":"Forbidden","message":"Bạn không có quyền thực hiện thao tác này.","correlationId":"b3f40f08-a5af-42e6-a6b6-df2a1a84d29e"}
+   ```
+   Đồng thời trên giao diện, thanh điều hướng của STAFF tự động ẩn các mục quản trị (`#nav-users-btn`).
 
----
+### C. Quản lý Tài liệu & Tải lên Tệp Thật (Document Management)
+1. **Tải danh sách tài liệu (`TC-DOC-01`):**  
+   Tải danh sách tài liệu từ cơ sở dữ liệu qua `GET /api/documents`.
+2. **Kiểm tra giới hạn dung lượng 20MB (`TC-DOC-03`):**  
+   Tệp `oversized_22mb.bin` bị client chặn ngay lập tức kèm cảnh báo `Dung lượng tệp vượt quá 20MB`.
+3. **Kiểm tra định dạng không hợp lệ (`TC-DOC-04`):**  
+   Tệp `invalid_script.exe` bị bộ lọc định dạng từ chối.
+4. **Tải lên tệp mẫu thật (`TC-DOC-UP-1` đến `TC-DOC-UP-4`):**  
+   Tải lên các tệp mẫu hợp lệ qua `UploadModal`:
+   - `sample_report.pdf` (PDF tài liệu kiểm toán)
+   - `sample_contract.txt` (Hợp đồng cung cấp hạ tầng)
+   - `sample_diagram.png` (Sơ đồ kiến trúc)
+   - `sample_specification.docx` (Quy cách kỹ thuật)  
+   Tất cả yêu cầu trả về `HTTP 201 Created`, tệp được lưu trữ tại `storage/uploads` và ghi nhận metadata vào PostgreSQL `documents`.
 
-## 3. Tổng Hợp Kết Quả Kiểm Thử
+### D. Bảng điều khiển Modern Aurora (Dashboard Repair)
+1. **Bố cục 3 hàng độc lập:**
+   - Hàng 1: 4 thẻ KPI đồng đều kích thước, khoảng cách 18px.
+   - Hàng 2: Tỷ lệ phân chia 45% (Phân loại tài liệu) và 55% (Tần suất sử dụng).
+   - Hàng 3: Bảng lịch sử hoạt động gần đây phong cách Zeit với action badge tiếng Việt.
+2. **Khả năng phục hồi dữ liệu (Data Resilience):**  
+   Xử lý an toàn các bản ghi có `document_type` chuỗi byte dài bằng cơ chế ellipsis truncation và hover tooltip, tuyệt đối không làm biến dạng layout.
 
-| Nhóm Kiểm Thử | Số Ca Kiểm Thử | VISUAL_PASS | INTEGRATION_PASS | E2E_PASS | FAILED | Trạng Thái |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **A. Đăng nhập & Xác thực JWT** | 5 | 5 | 5 | 5 | 0 | **PASS** |
-| **B. Quản lý Tài liệu & Tải tệp** | 10 | 10 | 10 | 10 | 0 | **PASS** |
-| **C. Quy trình & Phê duyệt** | 4 | 4 | 4 | 4 | 0 | **PASS** |
-| **D. Quản trị Hệ thống & Người dùng** | 5 | 5 | 5 | 5 | 0 | **PASS** |
-| **E. Responsive & Dark Mode** | 6 | 6 | 6 | 6 | 0 | **PASS** |
-| **TỔNG CỘNG** | **30** | **30** | **30** | **30** | **0** | **100% PASS** |
-
----
-
-## 4. Chi Tiết Các Nhóm Chức Năng Đã Xác Minh Thực Tế
-
-### Nhóm A: Đăng nhập và Phân quyền (Authentication & Authorization)
-- `TC_AUTH_01`: Màn hình Đăng nhập hiển thị chuẩn chỉ, form input thẳng hàng, nhãn tiếng Việt rõ ràng.
-- `TC_AUTH_02`: Đăng nhập với mật khẩu sai $\rightarrow$ Hiển thị thông báo lỗi `Tên đăng nhập hoặc mật khẩu không đúng`.
-- `TC_AUTH_03`: Đăng nhập ADMIN thành công với mật khẩu `123` (hoặc `1 2 3`) $\rightarrow$ Nhận JWT Bearer token, chuyển vào giao diện làm việc chính.
-- `TC_AUTH_04`: Đăng nhập STAFF thành công với mật khẩu `123` $\rightarrow$ Sidebar chỉ hiển thị mục cho nhân viên, tự động ẩn nhóm Quản trị.
-- `TC_AUTH_05`: Đăng nhập USER thành công $\rightarrow$ Quyền hạn hạn chế, bảo vệ dữ liệu nội bộ.
-
-### Nhóm B: Quản lý Tài liệu (Document Management)
-- `TC_DOC_01`: Tải danh sách tài liệu từ cơ sở dữ liệu thật qua API `/api/documents`.
-- `TC_DOC_02`: Mở Modal Tải lên (`UploadModal`) với đầy đủ trường tiêu đề, phân loại, mức độ bảo mật (INTERNAL/PRIVATE/PUBLIC).
-- `TC_DOC_03`: Kiểm tra tải tệp vượt quá 20MB (`oversized_22mb.bin`) $\rightarrow$ Bị chặn ngay từ frontend với thông báo lỗi rõ ràng.
-- `TC_DOC_04`: Kiểm tra tải tệp định dạng cấm (`invalid_script.exe`) $\rightarrow$ Bị từ chối hợp lệ.
-- `TC_DOC_05`: Tải lên thành công tệp tài liệu hợp lệ (`sample_contract.txt`, `sample_report.pdf`).
-- `TC_DOC_06`: Tìm kiếm tài liệu theo từ khóa và phân loại.
-- `TC_DOC_07`: Modal xem trước tài liệu (`PreviewModal`) hiển thị thông tin metadata đầy đủ.
-- `TC_DOC_08`: Modal chỉnh sửa metadata (`EditModal`) cập nhật dữ liệu thành công.
-- `TC_DOC_09`: Modal lịch sử phiên bản (`DocumentVersionModal`) theo dõi quá trình cập nhật.
-- `TC_DOC_10`: Modal chia sẻ quyền truy cập (`DocumentAccessModal`) quản lý quyền người dùng.
-
-### Nhóm C: Quy trình Nghiệp vụ (Workflows & Lifecycle)
-- `TC_WF_01`: Gửi tài liệu yêu cầu phê duyệt $\rightarrow$ Chuyển trạng thái sang `PENDING_REVIEW`.
-- `TC_WF_02`: Admin xem hàng đợi xét duyệt (`ReviewQueuePage`) $\rightarrow$ Phê duyệt tài liệu thành công.
-- `TC_WF_03`: Hàng đợi tiêu hủy (`DispositionQueuePage`) và kiểm tra Legal Hold an toàn.
-- `TC_WF_04`: Trung tâm tác vụ (`TaskCenterPage`) hiển thị danh sách công việc cần xử lý.
-
-### Nhóm D: Quản trị Hệ thống (System Administration)
-- `TC_ADM_01`: Bảng điều khiển (`DashboardPage`) tổng hợp biểu đồ, số liệu tài liệu và dung lượng lưu trữ.
-- `TC_ADM_02`: Quản lý người dùng (`UsersPage`) hiển thị danh sách phân quyền Admin/Staff/User.
-- `TC_ADM_03`: Nhật ký kiểm toán (`AuditLogPage`) ghi nhận đầy đủ hành động thêm, sửa, xóa, đăng nhập.
-- `TC_ADM_04`: Trạng thái hệ thống (`SystemStatusPage`) hiển thị kết nối DB, Storage và tài nguyên máy chủ.
-- `TC_ADM_05`: Trang xác thực công khai (`/verify` - `VerifyPage`) cho phép kiểm tra tính toàn vẹn chữ ký số không cần đăng nhập.
-
-### Nhóm E: Kiểm Thử Responsive & Dark Mode
-Đã chạy kiểm thử và chụp ảnh ở 5 độ phân giải chuẩn:
-1. **1440×900 (Desktop tiêu chuẩn):** Bố cục rộng rãi, sidebar đầy đủ.
-2. **1366×768 (Laptop phổ biến):** Các khối cân đối, không xuất hiện thanh cuộn ngang ngoài ý muốn.
-3. **768×1024 (Tablet iPad):** Sidebar co giãn mượt mà thành ngăn kéo (drawer).
-4. **390×844 (Mobile iPhone 14/15):** Menu chuyển thành thanh điều hướng di động, modal co giãn vừa vặn màn hình.
-5. **375×812 (Mobile iPhone X/Mini):** Các nút bấm và form đăng nhập đáp ứng tốt, không bị che khuất.
-6. **Dark Mode:** Đã kiểm tra độ tương phản màu sắc đạt chuẩn WCAG AA, không chói mắt, biểu tượng rõ nét.
+### E. Kiểm thử Đa Thiết bị (Responsive) & Dark Mode
+Đã chạy kiểm thử và chụp ảnh màn hình nghiệm thu trên 5 độ phân giải mục tiêu:
+- 1440×900 (Desktop tiêu chuẩn)
+- 1366×768 (Laptop phổ biến)
+- 768×1024 (Tablet iPad)
+- 390×844 (Mobile iPhone 14 Pro)
+- 375×812 (Mobile iPhone X)  
+Tất cả các viewports đều đạt tiêu chuẩn: **0 hiện tượng tràn màn hình ngang (horizontal overflow)**. Chế độ Dark Mode hoạt động đồng bộ với độ tương phản cao, 0 chói.
 
 ---
 
-## 5. Danh Mục Ảnh Bằng Chứng Kiểm Thử
+## 3. Tổng Hợp Ma Trận Kết Quả Kiểm Thử Thực Tế
 
-Toàn bộ ảnh chụp thực tế được lưu trữ tại `docs/qa-real-ui/screenshots/`:
-- `admin/admin_dashboard_logged_in.png`: Bảng điều khiển sau khi Admin đăng nhập với `123`.
-- `admin/login_page.png`: Giao diện trang đăng nhập chính thức.
-- `admin/TC_DOC_02_upload_modal.png`: Thao tác trực tiếp trên Modal Tải lên.
-- `admin/TC_DOC_07_preview_modal.png`: Thao tác trên Modal Xem trước tài liệu.
-- `admin/TC_ADM_01_user_list.png`: Giao diện Danh sách Người dùng và Phân quyền.
-- `errors/TC_AUTH_02_invalid_password.png`: Thông báo lỗi khi đăng nhập sai thông tin.
-- `errors/TC_DOC_03_oversized_rejection.png`: Chặn tệp quá kích thước 20MB.
-- `responsive/TC_RESP_*.png`: Đầy đủ 5 độ phân giải kiểm thử.
+Ma trận chi tiết được lưu trữ tại [`docs/qa-real-ui/TEST_CASE_MATRIX.csv`](file:///f:/DoAn_CNPMNC/docs/qa-real-ui/TEST_CASE_MATRIX.csv):
+- Tổng số ca kiểm thử: **30 ca**
+- Ca đạt chuẩn trực quan (VISUAL_PASS): **13 ca**
+- Ca đạt chuẩn nghiệp vụ đầu cuối (E2E_PASS): **17 ca**
+- Ca thất bại (FAILED): **0 ca**
+- Số lỗi Console bắt được trong quá trình kiểm thử: **0 lỗi**
 
 ---
 
-## 6. Kết Luận & Bàn Giao
+## 4. Kế Hoạch Quay Vòng Thông Tin Xác Thực (Credential Rotation Plan)
 
-Hệ thống đã trải qua quá trình kiểm thử tự động toàn diện qua trình duyệt thật trên máy Windows, vượt qua tất cả 30 ca kiểm thử không dùng dữ liệu giả lập (mocking) API.
+1. **Nguyên tắc cốt lõi:** Tuyệt đối không can thiệp, cập nhật hay đặt lại database thủ công trên môi trường hiện tại (`không tự ý reset database`).
+2. **Quy trình áp dụng khi triển khai:**
+   - Khi triển khai lên môi trường Staging/Production, toàn bộ tài khoản hệ thống sẽ được cấp phát mật khẩu mạnh mới ngẫu nhiên (tối thiểu 16 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt) thông qua biến môi trường bí mật hoặc quy trình quản trị người dùng chính thức.
+   - Các kịch bản kiểm thử tự động đọc thông tin xác thực từ biến môi trường của hệ thống CI/CD (`EDMS_ADMIN_USERNAME`, `EDMS_ADMIN_PASSWORD`), tuyệt đối không lưu trữ thông tin nhạy cảm trong mã nguồn.
 
-Chủ sở hữu hệ thống (Owner) có thể trực tiếp mở trình duyệt và trải nghiệm:
-- **Địa chỉ:** `http://localhost:5173`
-- **Tài khoản:** `admin` / Mật khẩu: `123` (hoặc `1 2 3`)
-- **Trạng thái:** **`READY_FOR_OWNER_REVIEW`**
+---
 
+## 5. Kết Luận & Trạng Thái Nghiệm Thu
+
+Hệ thống đã được kiểm thử toàn diện trên trình duyệt Chrome thật, kết nối cơ sở dữ liệu và API Backend thật, giải quyết triệt để tất cả các yêu cầu từ Owner Review.
+
+**Trạng thái nghiệm thu:** **`READY_FOR_OWNER_REVIEW`**

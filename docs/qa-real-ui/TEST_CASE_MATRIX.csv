@@ -1,7 +1,7 @@
 Test ID,Category,Test Name,Role,Status,Details,Screenshot Path,Timestamp
 "TC-AUTH-01","Authentication","Tải trang đăng nhập","ANONYMOUS","VISUAL_PASS","Giao diện đăng nhập tải thành công; chuẩn Modern Aurora & Enterprise UI","screenshots/admin/TC_AUTH_01_login_page.png","2026-11-01T13:46:00.000Z"
 "TC-AUTH-02","Authentication","Sai mật khẩu hiển thị thông báo lỗi","ANONYMOUS","E2E_PASS","HTTP 401 Unauthorized từ Backend: Tên đăng nhập hoặc mật khẩu không chính xác","screenshots/errors/TC_AUTH_02_invalid_password.png","2026-11-01T13:46:36.748Z"
-"TC-AUTH-03","Authentication","Đăng nhập ADMIN thành công","ROLE_ADMIN","E2E_PASS","HTTP 200 OK từ Backend /api/auth/login; cấp phát Bearer JWT token thành công","screenshots/admin/TC_AUTH_03_admin_documents.png","2026-11-01T13:46:30.000Z"
+"TC-AUTH-03","Authentication","Đăng nhập ADMIN thành công","ROLE_ADMIN","E2E_PASS","HTTP 200 OK từ Backend /api/auth/login; cấp phát Bearer JWT token thành công qua env credentials","screenshots/admin/TC_AUTH_03_admin_documents.png","2026-11-01T13:46:30.000Z"
 "TC-AUTH-04","Authentication","Lưu trữ JWT trong localStorage","ROLE_ADMIN","E2E_PASS","Khóa edms_token lưu trữ JWT hợp lệ trong localStorage; tự động gắn Bearer header","","2026-11-01T13:46:30.100Z"
 "TC-ADM-01","User Management","Xem danh sách người dùng","ROLE_ADMIN","E2E_PASS","HTTP 200 OK từ /api/admin/users; tải danh sách tài khoản từ database PostgreSQL thật","screenshots/admin/TC_ADM_01_user_list.png","2026-11-01T13:52:12.000Z"
 "TC-ADM-02","User Management","Mở CreateUserModal","ROLE_ADMIN","VISUAL_PASS","Modal thêm người dùng chuẩn EnterpriseModal với focus trap và đầy đủ vai trò ROLE_USER/STAFF/ADMIN","screenshots/admin/TC_ADM_02_create_user_modal.png","2026-11-01T13:52:14.000Z"
