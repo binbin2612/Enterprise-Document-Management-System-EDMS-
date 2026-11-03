@@ -17,10 +17,20 @@ async function captureRemaining() {
   const page = await browser.newPage();
   await page.setViewport({ width: 1440, height: 900 });
 
+  const consoleErrors = [];
+  page.on('console', msg => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  page.on('pageerror', err => consoleErrors.push(err.toString()));
+
   try {
     // Login
-    const adminUser = process.env.EDMS_ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.EDMS_ADMIN_PASSWORD || '123';
+    const adminUser = process.env.EDMS_ADMIN_USERNAME;
+    const adminPass = process.env.EDMS_ADMIN_PASSWORD;
+    if (!adminUser || !adminPass) {
+      console.error('❌ FATAL: Environment variables EDMS_ADMIN_USERNAME and EDMS_ADMIN_PASSWORD are required (no fallback allowed).');
+      process.exit(1);
+    }
     await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     await page.waitForSelector('#username-input');
     await page.type('#username-input', adminUser);
@@ -99,6 +109,10 @@ async function captureRemaining() {
     fs.copyFileSync(darkUsersPath, path.join(ARTIFACT_DIR, 'aurora_dark_mode_users.png'));
     console.log('   Captured Dark Mode Users.');
 
+    if (consoleErrors.length > 0) {
+      console.error(`❌ FATAL: Detected ${consoleErrors.length} console errors:`, consoleErrors);
+      process.exit(1);
+    }
     console.log('REMAINING SCREENSHOTS CAPTURED SUCCESSFULLY!');
   } catch (err) {
     console.error('Error during captureRemaining:', err);

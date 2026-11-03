@@ -23,9 +23,15 @@ async function capture() {
   await page.screenshot({ path: path.join(ARTIFACT_IMG_DIR, 'edms_login_screen.png') });
   console.log('1. Captured edms_login_screen.png');
 
-  // 2. Login as admin with 123
-  await page.type('#username-input', 'admin');
-  await page.type('#password-input', '123');
+  // 2. Login as admin using environment variables (no fallback)
+  const adminUser = process.env.EDMS_ADMIN_USERNAME;
+  const adminPass = process.env.EDMS_ADMIN_PASSWORD;
+  if (!adminUser || !adminPass) {
+    console.error('❌ FATAL: Environment variables EDMS_ADMIN_USERNAME and EDMS_ADMIN_PASSWORD are required (no fallback allowed).');
+    process.exit(1);
+  }
+  await page.type('#username-input', adminUser);
+  await page.type('#password-input', adminPass);
   await page.click('button[type="submit"]');
   await new Promise(r => setTimeout(r, 2000));
   await page.screenshot({ path: path.join(ARTIFACT_IMG_DIR, 'edms_admin_documents.png') });

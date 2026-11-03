@@ -38,11 +38,18 @@ async function runTests() {
       consoleErrors.push(msg.text());
     }
   });
+  page.on('pageerror', err => {
+    consoleErrors.push(err.toString());
+  });
 
   try {
     // 1. Login as ADMIN
-    const adminUser = process.env.EDMS_ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.EDMS_ADMIN_PASSWORD || '123';
+    const adminUser = process.env.EDMS_ADMIN_USERNAME;
+    const adminPass = process.env.EDMS_ADMIN_PASSWORD;
+    if (!adminUser || !adminPass) {
+      console.error('❌ FATAL: Environment variables EDMS_ADMIN_USERNAME and EDMS_ADMIN_PASSWORD are required (no fallback allowed).');
+      process.exit(1);
+    }
     console.log(`1. Logging in as ${adminUser}...`);
     await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     await page.waitForSelector('#username-input');
@@ -206,7 +213,8 @@ async function runTests() {
 
     console.log('Console Errors caught:', consoleErrors);
     if (consoleErrors.length > 0) {
-      console.error(`⚠️ Found ${consoleErrors.length} console errors during execution.`);
+      console.error(`❌ FATAL: Found ${consoleErrors.length} console errors during execution:`, consoleErrors);
+      process.exit(1);
     }
     console.log('ALL VERIFICATION TESTS FINISHED SUCCESSFULLY!');
   } catch (err) {

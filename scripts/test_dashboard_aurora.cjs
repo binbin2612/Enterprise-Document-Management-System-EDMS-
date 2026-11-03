@@ -25,10 +25,24 @@ async function runDashboardTests() {
   const page = await browser.newPage();
   await page.setViewport({ width: 1440, height: 900 });
 
+  const consoleErrors = [];
+  page.on('console', msg => {
+    if (msg.type() === 'error') {
+      consoleErrors.push(msg.text());
+    }
+  });
+  page.on('pageerror', err => {
+    consoleErrors.push(err.toString());
+  });
+
   try {
     // 1. Login
-    const adminUser = process.env.EDMS_ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.EDMS_ADMIN_PASSWORD || '123';
+    const adminUser = process.env.EDMS_ADMIN_USERNAME;
+    const adminPass = process.env.EDMS_ADMIN_PASSWORD;
+    if (!adminUser || !adminPass) {
+      console.error('❌ FATAL: Environment variables EDMS_ADMIN_USERNAME and EDMS_ADMIN_PASSWORD are required (no fallback allowed).');
+      process.exit(1);
+    }
     console.log(`Logging in as ${adminUser}...`);
     await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     await page.waitForSelector('#username-input', { timeout: 8000 });
@@ -45,8 +59,10 @@ async function runDashboardTests() {
     });
 
     // Wait for Dashboard to load
-    await page.waitForSelector('.dash-kpi-grid', { timeout: 10000 });
-    await page.waitForSelector('.dash-table', { timeout: 10000 });
+    const kpiGrid = await page.waitForSelector('.dash-kpi-grid', { timeout: 10000 });
+    if (!kpiGrid) throw new Error('Assertion failed: .dash-kpi-grid element not found');
+    const table = await page.waitForSelector('.dash-table', { timeout: 10000 });
+    if (!table) throw new Error('Assertion failed: .dash-table element not found');
     await new Promise(r => setTimeout(r, 1200));
     console.log('✅ Dashboard content rendered.');
 
@@ -110,6 +126,12 @@ async function runDashboardTests() {
       fs.copyFileSync(darkActPath, path.join(ARTIFACT_DIR, 'aurora_activity_card_dark.png'));
     }
     console.log('✅ Captured 06_dashboard_dark_mode_1440.png & full page.');
+
+    console.log('Console errors captured:', consoleErrors);
+    if (consoleErrors.length > 0) {
+      console.error(`❌ FATAL: Detected ${consoleErrors.length} console error(s) during dashboard test:`, consoleErrors);
+      process.exit(1);
+    }
 
     console.log('\n🎉 ALL DASHBOARD SCREENSHOTS & AUDITS COMPLETED SUCCESSFULLY!');
   } catch (err) {
