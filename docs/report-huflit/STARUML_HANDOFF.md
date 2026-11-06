@@ -1,4 +1,7 @@
 # TÀI LIỆU THIẾT KẾ & BÀN GIAO MÔ HÌNH UML CHO STARUML
+
+> **CẢNH BÁO OWNER REVIEW — 06/11/2026:** Bản đặc tả này có các endpoint, luồng đăng nhập, tiêu hủy logic, và một số trường entity **chưa khớp mã nguồn** tại commit `43bea99`. **CHANGES_REQUIRED — chưa dùng để vẽ StarUML hay chèn trực tiếp vào báo cáo cuối.** Đọc và sửa theo [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md). Các thống kê SQL được đối soát riêng, không mặc nhiên xác nhận nội dung UML.
+
 ## Dự Án: Hệ Thống Quản Lý Và Lưu Trữ Tài Liệu Điện Tử Doanh Nghiệp (EDMS)
 ### Người phụ trách phân tích & thiết kế: Viên Bảo Đức (System Analyst & Designer)
 ### Môn học: Công nghệ phần mềm nâng cao — HUFLIT
