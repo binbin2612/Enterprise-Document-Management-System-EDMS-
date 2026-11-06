@@ -1,5 +1,8 @@
 # Hồ sơ Đối soát & Bàn giao Minh chứng EDMS Phục vụ Báo cáo HUFLIT
 
+> **Owner review 06/11/2026:** Bản bàn giao Anti đã có đủ tài liệu kiểm kê, nhưng đặc tả StarUML vẫn còn lỗi so với controller/service thật. **Không dùng `STARUML_HANDOFF.md` hoặc Word làm bản nộp cuối** trước khi xử lý [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md). PR #16 giữ Draft.
+
+
 **Ngày hoàn tất đối soát:** 06/11/2026  
 **Dự án:** EDMS — Hệ thống Quản lý và Lưu trữ Tài liệu Điện tử Doanh nghiệp  
 **Môn học:** Công nghệ phần mềm nâng cao (CNPMNC) — HUFLIT  
