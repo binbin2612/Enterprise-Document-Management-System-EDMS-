@@ -1,4 +1,7 @@
 # BÁO CÁO TỔNG KẾT ĐỐI SOÁT & KIỂM CHỨNG MINH CHỨNG SẢN PHẨM EDMS (HUFLIT)
+
+> **PHỤ LỤC OWNER REVIEW — 06/11/2026:** Báo cáo này ghi nhận kết quả kiểm chứng Docker/SQL/ZIP do Anti bàn giao. Trên cơ sở đối chiếu độc lập mã nguồn, phần `STARUML_HANDOFF.md` còn nhiều API và nghiệp vụ mô tả sai (đặc biệt refresh JWT, tuyến API, tiêu hủy vật lý, quan hệ ERD). **Chưa khóa nghiệm thu toàn bộ hồ sơ hoặc Word** cho tới khi sửa theo [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md) và kiểm tra Word cục bộ. Kết luận “đủ điều kiện bảo vệ” phía dưới là đánh giá của đợt Anti bàn giao, không thay thế bước owner acceptance.
+
 ## HỒ SƠ CHÍNH THỨC DÀNH CHO HỘI ĐỒNG BẢO VỆ VÀ CHỦ DỰ ÁN
 
 - **Hệ thống:** EDMS — Hệ thống Quản lý và Lưu trữ Tài liệu Điện tử Doanh nghiệp
