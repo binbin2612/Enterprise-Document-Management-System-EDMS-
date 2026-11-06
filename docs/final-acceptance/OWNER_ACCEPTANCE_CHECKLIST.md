@@ -17,16 +17,17 @@ Các container EDMS hiện đang chạy ổn định trên Docker Desktop máy c
 - **Tài liệu API Swagger/OpenAPI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 - **Cơ sở dữ liệu PostgreSQL:** `localhost:5432` (Database: `edms_db`, User: `edms_user`)
 
-### Thông tin Tài khoản Kiểm thử Môi trường QA Nội bộ
-> [!NOTE]
-> Mật khẩu kiểm thử nội bộ phục vụ nghiệm thu các phân hệ chức năng. Việc đổi mật khẩu bảo mật sản xuất được quản lý theo kế hoạch tại Ticket `EDMS-SEC-201` (`PASSWORD_ROTATION_PENDING`).
+### Tài khoản kiểm thử môi trường QA nội bộ
 
-| Vai trò kiểm thử | Tên đăng nhập (Username) | Mật khẩu mẫu QA | Mục đích kiểm tra |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin` | `123` | Toàn quyền cấu hình, quản lý người dùng, xem KPI Dashboard, duyệt tài liệu |
-| **Chuyên viên (STAFF)** | `staff` | `123` | Soạn thảo, tải lên tài liệu, xử lý công việc được giao, không xem trang Quản trị |
-| **Người dùng (USER)** | `user` | `123` | Xem tài liệu công khai/được chia sẻ, tải xuống, không truy cập trang Quản trị |
+> **Bảo mật:** Không công bố mật khẩu kiểm thử trên repository hoặc tài liệu nộp công khai. Thông tin đăng nhập phải được cung cấp qua kênh nội bộ an toàn; chỉ chạy trên môi trường Docker QA được cho phép. Việc đổi mật khẩu vẫn **chưa hoàn tất** theo ticket `EDMS-SEC-201` (`PASSWORD_ROTATION_PENDING`). Không đem tài khoản QA vào môi trường Internet công khai.
 
+| Vai trò | Tài khoản mẫu QA | Nguồn mật khẩu |
+| :--- | :--- | :--- |
+| Quản trị viên (`ROLE_ADMIN`) | `admin` | Cung cấp nội bộ; không lưu trong Git |
+| Chuyên viên (`ROLE_STAFF`) | `staff` | Cung cấp nội bộ; không lưu trong Git |
+| Người dùng (`ROLE_USER`) | `user` | Cung cấp nội bộ; không lưu trong Git |
+
+**Đối soát khi nghiệm thu:** Tại commit `43bea99`, Backend enum `Role.java` định nghĩa **ba** vai trò trên. Thống kê 3.663 tài liệu trong checklist là snapshot QA; biên bản bàn giao mới nêu 3.667 và phải kiểm tra SQL trước khi dùng trong báo cáo cuối. Xem [bảng đối soát HUFLIT](../report-huflit/REPORT_FACTCHECK_2026-11-06.md).
 ---
 
 ## 2. Danh mục 8 Nhóm Tính năng Cốt lõi Cần Nghiệm thu
