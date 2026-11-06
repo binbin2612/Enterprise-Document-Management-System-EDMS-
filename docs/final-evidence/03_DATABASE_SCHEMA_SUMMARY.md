@@ -1,5 +1,7 @@
 # 03 — DATABASE SCHEMA SUMMARY
 
+> **GHI CHÚ PHIÊN BẢN — 06/11/2026:** Bảng số lượng 21 users / 49 documents phía dưới là **snapshot lịch sử** của giai đoạn lập tài liệu, **không phải số liệu dữ liệu hiện hành** của bản demo tại commit `43bea99`. Mã nguồn hiện có thêm các entity/quan hệ khác; không sử dụng nội dung này làm ERD hoặc Data Dictionary cuối cùng khi chưa đối chiếu schema PostgreSQL thực tế. Xem [hồ sơ đối soát HUFLIT](../report-huflit/REPORT_FACTCHECK_2026-11-06.md) và [SQL kiểm chứng chỉ đọc](../report-huflit/READ_ONLY_VERIFICATION.sql).
+
 **Database Management System**: PostgreSQL 16 Alpine  
 **Database Name**: `edms_db`  
 **Database User**: `edms_user`  
