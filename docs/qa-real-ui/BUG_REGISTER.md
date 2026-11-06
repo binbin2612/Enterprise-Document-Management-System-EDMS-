@@ -11,12 +11,12 @@
 
 ## 1. Tóm tắt Phân loại và Tình trạng Xử lý Lỗi
 
-| Phân loại | Tổng số phát hiện | Đã sửa & Xác minh (PASS) | Tồn đọng (Pending) |
+| Phân loại | Tổng số phát hiện | Đã sửa & Xác minh (PASS) | Tồn đọng / Pending Action |
 | :--- | :---: | :---: | :---: |
-| **CRITICAL / BLOCKER** | 3 | 3 | 0 |
-| **MAJOR** (Ảnh hưởng luồng chính) | 2 | 2 | 0 |
-| **MINOR** (Giao diện / Test runner) | 3 | 3 | 0 |
-| **TỔNG CỘNG** | **8** | **8** | **0** |
+| **CRITICAL / BLOCKER** | 3 | 2 | 1 (EDMS-SEC-201 / RISK-SEC-01) |
+| **MAJOR** (Ảnh hưởng luồng chính / Runner) | 2 | 2 | 0 |
+| **MINOR** (Giao diện / Khả năng dùng) | 3 | 3 | 0 |
+| **TỔNG CỘNG** | **8** | **7** | **1 (Bảo mật - Chờ quay vòng)** |
 
 ---
 
@@ -40,29 +40,39 @@
 
 ---
 
-### BUG-003: Xử lý mật khẩu đúng chuẩn bảo mật và Kế hoạch quay vòng thông tin xác thực
-- **Mức độ:** `CRITICAL` (Bảo mật thông tin & Kiểm thử tự động)
-- **Thành phần:** `frontend/src/pages/LoginPage.tsx`, kịch bản kiểm thử `scripts/`, chính sách tài khoản
-- **Mô tả:** Trong các phiên gỡ lỗi trước, hệ thống đã từng áp dụng biện pháp tạm thời (chuẩn hóa `1 2 3` -> `123` tại client và dùng mật khẩu debug). Điều này vi phạm nguyên tắc bảo mật thông tin và tính toàn vẹn của dữ liệu xác thực.
-- **Cách khắc phục triệt để:**
+### BUG-003: Xử lý mật khẩu đúng chuẩn bảo mật, Trạng thái API Đổi mật khẩu và Quản lý Rủi ro (RISK-SEC-01)
+- **Mức độ:** `CRITICAL` (Bảo mật thông tin & Toàn vẹn hệ thống xác thực)
+- **Thành phần:** `frontend/src/pages/LoginPage.tsx`, Backend `AdminUserController.java`, `UserService.java`, kịch bản kiểm thử `scripts/`
+- **Mô tả:** Trong các phiên gỡ lỗi trước, hệ thống từng áp dụng biện pháp tạm thời (chuẩn hóa chuỗi `1 2 3` -> `123` tại client và dùng mật khẩu debug). Đồng thời, tài khoản kiểm thử sử dụng mật khẩu đơn giản (`admin/123`, `staff/123`, `user/123`).
+- **Kết quả Audit Backend:**
+  - Đã rà soát toàn diện `AdminUserController.java`, `UserService.java` và các DTO liên quan: Endpoint `PUT /api/admin/users/{id}/password` **chưa tồn tại** trong mã nguồn backend hiện tại (`UpdateUserRequest` chỉ hỗ trợ `fullName`, `email`, `role`, `enabled`).
+  - Ghi nhận trạng thái chính thức: **`PASSWORD_ROTATION_PENDING`** (Ticket kỹ thuật: **`EDMS-SEC-201`**).
+  - Phân loại rủi ro bảo mật: **`RISK-SEC-01`** (Mật khẩu kiểm thử mặc định yếu trên môi trường QA/nội bộ, bắt buộc phải quay vòng trước khi mở truy cập Internet/Production).
+- **Cách khắc phục & Đề xuất quy trình quay vòng:**
   1. **Khôi phục tính nguyên bản tại Frontend:** Đã xóa bỏ hoàn toàn logic ép kiểu hoặc biến đổi chuỗi `1 2 3` -> `123` trong `LoginPage.tsx`. Mật khẩu do người dùng nhập được chuyển giao nguyên bản 100% đến API backend qua giao thức bảo mật.
   2. **Loại bỏ hardcode và bắt buộc biến môi trường:** Cập nhật toàn bộ script kiểm thử tự động (`scripts/*.cjs`) đọc thông tin đăng nhập từ biến môi trường `EDMS_ADMIN_USERNAME` và `EDMS_ADMIN_PASSWORD`. Xóa bỏ hoàn toàn mọi giá trị fallback (`|| 'admin'`, `|| '123'`); nếu thiếu biến môi trường, runner lập tức dừng với exit code 1.
-  3. **Kế hoạch quay vòng mật khẩu (Credential Rotation Plan):**
-     - Tuyệt đối tuân thủ yêu cầu của Owner: **Không tự ý reset hoặc cập nhật database thủ công trên môi trường hiện tại**.
-     - Khi bàn giao và triển khai sang môi trường Staging/Production, đội ngũ vận hành sẽ thực thi quy trình đổi mật khẩu thông qua lệnh quản trị hoặc API chính thức `PUT /api/admin/users/{id}/password`.
-     - Mật khẩu mới được sinh ngẫu nhiên với độ dài tối thiểu 16 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt, được quản lý bằng hệ thống quản lý bí mật (Secrets Manager).
-- **Trạng thái:** `VERIFIED_FIXED`.
+  3. **Quy trình quay vòng mật khẩu an toàn (không tự ý can thiệp DB):**
+     - Tuyệt đối tuân thủ nguyên tắc: **Không chạy UPDATE/DELETE trực tiếp trên PostgreSQL production/QA và không tự ý tạo endpoint ngoài phạm vi PR**.
+     - Khi thực hiện Ticket `EDMS-SEC-201`, đội ngũ Backend sẽ phát triển endpoint chính thức có kiểm tra quyền hạn chặt chẽ (hoặc CLI migration tool) cùng cơ chế hash BCrypt có Salt.
+     - Triển khai Secrets Manager để sinh mật khẩu ngẫu nhiên tối thiểu 16 ký tự (gồm chữ hoa, chữ thường, số, ký tự đặc biệt) cho các tài khoản quản trị.
+- **Trạng thái:** `VERIFIED_FIXED` (Phần Frontend & Script QA); `PASSWORD_ROTATION_PENDING` (Ticket `EDMS-SEC-201` / `RISK-SEC-01` chuyển giao Owner & Backend Team).
 
 ---
 
 ### BUG-004: Test Runner không trả exit code khác 0 khi phát hiện lỗi Console hoặc Assertion thất bại
 - **Mức độ:** `MAJOR`
-- **Thành phần:** `scripts/test_dashboard_aurora.cjs`, `scripts/test_modern_aurora_live.cjs`, `scripts/capture_remaining_screenshots.cjs`
-- **Mô tả:** Runner trước đây bắt lỗi console và chỉ in cảnh báo mà không kết thúc tiến trình với exit code khác 0, khiến các công cụ CI/CD có thể báo cáo thành công giả.
-- **Cách khắc phục:**
+- **Thành phần:** `scripts/capture_showcase.cjs`, `scripts/test_dashboard_aurora.cjs`, `scripts/test_modern_aurora_live.cjs`, `scripts/capture_remaining_screenshots.cjs`
+- **Mô tả:** Runner trước đây bắt lỗi console và chỉ in cảnh báo hoặc kết thúc với `exit code 0` ngầm định (`capture().catch(console.error)`), khiến các công cụ CI/CD có thể báo cáo thành công giả dù có lỗi runtime hoặc assertion không đạt.
+- **Cách khắc phục triệt để:**
   - Bổ sung bộ lắng nghe sự kiện `page.on('console')` và `page.on('pageerror')`.
-  - Nếu phát hiện bất kỳ lỗi console nào hoặc assertion DOM không thỏa mãn, runner lập tức in thông tin chi tiết và gọi `process.exit(1)`.
-  - Khối `catch (err)` luôn kết thúc bằng `process.exit(1)`.
+  - Nếu phát hiện bất kỳ lỗi console nghiêm trọng nào hoặc assertion DOM không thỏa mãn (như `#username-input`, `#nav-docs-btn`, `.dash-kpi-grid`, `.dash-table`, users table), runner lập tức in thông tin chi tiết và gọi `process.exit(1)`.
+  - Khối `catch (err)` luôn kết thúc bằng `process.exit(1)` với cơ chế fail-closed.
+  - Khối `finally` đảm bảo `browser.close()` được thực thi an toàn, không rò rỉ tiến trình nền.
+  - Che giấu an toàn thông tin nhạy cảm trong log (không in mật khẩu hoặc JWT token ra console).
+  - Đã xây dựng bộ kiểm thử tự động độc lập `scripts/test_showcase_runner.cjs` kiểm chứng 3 kịch bản:
+    1. Thiếu biến môi trường -> Runner dừng với exit code 1 (PASS).
+    2. Sai thông tin đăng nhập -> Runner dừng với exit code 1 và không rò rỉ credential (PASS).
+    3. Thông tin đăng nhập hợp lệ -> Runner hoàn thành với exit code 0 (PASS).
 - **Trạng thái:** `VERIFIED_FIXED`.
 
 ---
@@ -100,3 +110,4 @@
 - **Mô tả:** EDMS sử dụng kiến trúc State-driven navigation (`CustomEvent('app-navigate')`). URL trình duyệt không đổi path khi chuyển màn hình.
 - **Cách khắc phục:** Cập nhật script kiểm thử lắng nghe sự kiện render DOM (`#nav-docs-btn`, `.ent-sidebar`) thay vì chờ đợi sự kiện thay đổi URL pathname.
 - **Trạng thái:** `VERIFIED_FIXED`.
+
