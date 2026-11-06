@@ -1,5 +1,7 @@
 # BÁO CÁO TỔNG KẾT KIỂM THỬ CHẤT LƯỢNG & BÀN GIAO NGHIỆM THU CUỐI CÙNG (FINAL QA ACCEPTANCE REPORT)
 
+> **LƯU Ý ĐỐI SOÁT BÁO CÁO HUFLIT (06/11/2026):** Các số liệu 3.663 tài liệu / 4.826 phiên bản dưới đây là **mốc đã ghi nhận trong đợt QA**; biên bản bàn giao minh chứng sau đó nêu 3.667 / 4.830 nhưng chưa có truy vấn PostgreSQL mới để xác nhận chênh lệch. Mã nguồn tại commit `43bea99` chỉ có **3 vai trò** `ROLE_ADMIN`, `ROLE_STAFF`, `ROLE_USER`. Chi tiết, giới hạn và SQL đối soát xem [REPORT_FACTCHECK_2026-11-06.md](../report-huflit/REPORT_FACTCHECK_2026-11-06.md). Trạng thái `READY_FOR_FINAL_OWNER_ACCEPTANCE` **không có nghĩa chủ dự án đã phê duyệt**.
+
 **Dự án:** EDMS — Hệ thống Quản lý và Lưu trữ Tài liệu Điện tử  
 **Mã nguồn PR Giao diện:** PR `#15` (`feat/edms-modern-aurora-ui`)  
 **Mã nguồn PR Nền tảng:** PR `#14` (`feat/edms-ui-consistency-final`)  
