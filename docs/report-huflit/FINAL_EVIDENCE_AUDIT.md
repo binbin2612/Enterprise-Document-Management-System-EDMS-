@@ -1,6 +1,6 @@
 # BÁO CÁO TỔNG KẾT ĐỐI SOÁT & KIỂM CHỨNG MINH CHỨNG SẢN PHẨM EDMS (HUFLIT)
 
-> **PHỤ LỤC OWNER REVIEW — 06/11/2026:** Báo cáo này ghi nhận kết quả kiểm chứng Docker/SQL/ZIP do Anti bàn giao. Trên cơ sở đối chiếu độc lập mã nguồn, phần `STARUML_HANDOFF.md` còn nhiều API và nghiệp vụ mô tả sai (đặc biệt refresh JWT, tuyến API, tiêu hủy vật lý, quan hệ ERD). **Chưa khóa nghiệm thu toàn bộ hồ sơ hoặc Word** cho tới khi sửa theo [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md) và kiểm tra Word cục bộ. Kết luận “đủ điều kiện bảo vệ” phía dưới là đánh giá của đợt Anti bàn giao, không thay thế bước owner acceptance.
+> **PHỤ LỤC OWNER REVIEW — 07/11/2026:** Mốc SQL/ZIP trong tài liệu là kết quả Anti bàn giao. Chủ dự án đã sửa lại đặc tả `STARUML_HANDOFF.md` theo API và JPA trên commit `43bea99`, **nhưng Word cục bộ và sơ đồ StarUML xuất ra chưa được kiểm chứng**. Đồng thời, kiểm toán source mới cho thấy **52/78 dòng** trong ma trận chức năng chứa ít nhất một dẫn chiếu tên tệp không tồn tại; xem [FEATURE_SOURCE_AUDIT_2026-11-07.md](FEATURE_SOURCE_AUDIT_2026-11-07.md). Do đó, kết luận PASS và 51 LIVE/27 CODE bên dưới là **đánh giá tại thời điểm Anti bàn giao, không phải nghiệm thu cuối cùng của owner**. **Status: SOURCE_RECHECK_REQUIRED**; không dùng tuyên bố 78/78 đã xác minh trước khi đối chiếu lại.
 
 ## HỒ SƠ CHÍNH THỨC DÀNH CHO HỘI ĐỒNG BẢO VỆ VÀ CHỦ DỰ ÁN
 
