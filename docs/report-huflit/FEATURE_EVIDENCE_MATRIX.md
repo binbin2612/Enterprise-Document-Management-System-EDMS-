@@ -1,4 +1,7 @@
 # EDMS — MA TRẬN MINH CHỨNG KỸ THUẬT VÀ ĐỐI SOÁT CHỨC NĂNG HỆ THỐNG
+
+> **OWNER SOURCE AUDIT — 07/11/2026: SOURCE_RECHECK_REQUIRED.** Rà cây Git theo commit `43bea99` phát hiện **52/78 dòng** dẫn tối thiểu một tên `.java/.tsx/.ts` không tồn tại, cùng nhiều endpoint sai và tính năng chưa có API (đáng chú ý reset password ở STT 63). **Không dùng bảng này để tuyên bố 78/78 đã xác minh** trước khi đối chiếu lại từng dòng. Xem [FEATURE_SOURCE_AUDIT_2026-11-07.md](FEATURE_SOURCE_AUDIT_2026-11-07.md). Các trạng thái LIVE/CODE trong bảng là ghi nhận cũ của Anti, **chưa phải kết luận nghiệm thu của owner**.
+
 ## Phục Vụ Báo Cáo Đồ Án Công Nghệ Phần Mềm Nâng Cao (HUFLIT)
 
 - **Hệ thống:** EDMS — Hệ thống Quản lý và Lưu trữ Tài liệu Điện tử Doanh nghiệp
