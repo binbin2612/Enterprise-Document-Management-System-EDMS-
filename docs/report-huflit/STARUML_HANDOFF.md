@@ -1,452 +1,188 @@
-# TÀI LIỆU THIẾT KẾ & BÀN GIAO MÔ HÌNH UML CHO STARUML
+# ĐẶC TẢ SƠ ĐỒ UML EDMS — PHIÊN BẢN ĐỐI CHIẾU MÃ NGUỒN
 
-> **CẢNH BÁO OWNER REVIEW — 06/11/2026:** Bản đặc tả này có các endpoint, luồng đăng nhập, tiêu hủy logic, và một số trường entity **chưa khớp mã nguồn** tại commit `43bea99`. **CHANGES_REQUIRED — chưa dùng để vẽ StarUML hay chèn trực tiếp vào báo cáo cuối.** Đọc và sửa theo [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md). Các thống kê SQL được đối soát riêng, không mặc nhiên xác nhận nội dung UML.
+**Học phần:** Công nghệ phần mềm nâng cao — HUFLIT  
+**Người thực hiện sơ đồ:** Viên Bảo Đức  
+**Mã nguồn đối chiếu:** commit 43bea99cc2804ec661dc3fde331c4a0ddbf14a44, nhánh feat/edms-modern-aurora-ui  
+**Ngày hiệu đính:** 07/11/2026  
+**Trạng thái:** SOURCE_CORRECTED — CHỜ ĐỨC VẼ STARUML VÀ OWNER KIỂM TRA HÌNH XUẤT
 
-## Dự Án: Hệ Thống Quản Lý Và Lưu Trữ Tài Liệu Điện Tử Doanh Nghiệp (EDMS)
-### Người phụ trách phân tích & thiết kế: Viên Bảo Đức (System Analyst & Designer)
-### Môn học: Công nghệ phần mềm nâng cao — HUFLIT
-### Căn cứ kỹ thuật: Mã nguồn Backend Spring Boot & Frontend React (PR #15, commit `43bea99`)
+> Đây là bản mô tả để vẽ lại bằng StarUML, không phải bản xuất trực tiếp từ StarUML. Các tuyến API đã đối chiếu với Controller Java; tên entity/field đối chiếu với mã JPA. Phần ràng buộc FK/CASCADE vật lý chỉ được xác nhận khi có kết quả đọc schema PostgreSQL. Danh sách tính năng và ảnh màn hình thuộc hồ sơ chứng cứ riêng và có thể cần sửa theo báo cáo kiểm toán mã nguồn bổ sung.
 
----
+## 1. Phạm vi, tác nhân và ranh giới hệ thống
 
-## 1. MỤC ĐÍCH VÀ NGUYÊN TẮC THIẾT KẾ
+| Tác nhân ngoài hệ thống | Vai trò và hành động |
+| --- | --- |
+| **Quản trị viên** (ROLE_ADMIN) | Đăng nhập, quản lý người dùng, xem báo cáo/nhật ký, duyệt hoặc từ chối yêu cầu xét duyệt và tiêu hủy, xử lý tài liệu theo quyền |
+| **Nhân viên** (ROLE_STAFF) | Đăng nhập, quản lý tài liệu theo quyền sở hữu và ACL, gửi yêu cầu xét duyệt/tiêu hủy khi đủ điều kiện |
+| **Người dùng** (ROLE_USER) | Đăng nhập, xem/tìm/tải các tài liệu được cho phép, quản lý bộ lọc tìm kiếm cá nhân; các thao tác ghi phụ thuộc kiểm tra quyền cụ thể |
+| **Khách tra cứu công khai** | Truy cập trang /verify và API /api/public/verify, /api/public/verify-file không cần tài khoản |
 
-Tài liệu này đóng vai trò bản đặc tả thiết kế kỹ thuật (Design Specification & UML Blueprint) để thành viên phụ trách UML (**Viên Bảo Đức**) sử dụng phần mềm **StarUML** vẽ lại toàn bộ các sơ đồ hệ thống cho bản báo cáo đồ án tốt nghiệp / đồ án môn học tại HUFLIT.
+**Chỉ có 3 vai trò tài khoản** trong backend/entity/Role.java: ROLE_ADMIN, ROLE_STAFF, ROLE_USER. Khách tra cứu là tác nhân ngoài hệ thống, **không phải Role thứ tư**.
 
-### Nguyên tắc bắt buộc (Traceability & Truthfulness):
-1. **Tuyệt đối không bịa đặt:** Chỉ sử dụng các Actor, API, Entity, Enum và nghiệp vụ thực sự tồn tại trong mã nguồn.
-2. **Khớp 3 vai trò:** Hệ thống chỉ gồm **3 Actor có tài khoản** (`ROLE_ADMIN`, `ROLE_STAFF`, `ROLE_USER`) và **1 Actor công khai** (`Public User`), không đưa vào `ROLE_MANAGER` hay `ROLE_AUDITOR`.
-3. **Khớp 4 trạng thái xét duyệt:** `PENDING`, `APPROVED`, `REJECTED`, `SUPERSEDED` (theo enum `ReviewStatus.java`).
-4. **Khớp 4 trạng thái tiêu hủy:** `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED` (theo enum `DispositionStatus.java`).
-5. **Khớp 10 bảng cơ sở dữ liệu:** Khóa chính, khóa ngoại và quan hệ dữ liệu khớp 100% với PostgreSQL `edms_db`.
+Các thành phần nội bộ **không đặt thành Actor bên ngoài**: DocumentController, DocumentService, SemanticSearchService, LocalEmbeddingService, OcrService, SignatureService, KeyStoreService, NotificationService, PostgreSQL, bộ lưu trữ tệp. Chúng thuộc ranh giới hệ thống hoặc là lifeline ở sơ đồ trình tự.
 
----
+## 2. Sơ đồ Use Case
 
-## 2. DANH MỤC ACTOR HỆ THỐNG (HỆ THỐNG THỰC TẾ)
+Vẽ **một khung hệ thống EDMS**, đặt 4 tác nhân bên ngoài; chia Use Case thành 6 package. Nối actor vào đúng các tác vụ có quyền, không tùy tiện gán toàn quyền cho Staff/User. Các thao tác có kiểm tra ACL phải có ghi chú guard: người sở hữu, Admin hoặc người được cấp quyền tương ứng.
 
-| Ký hiệu Actor | Tên Actor | Định nghĩa & Phạm vi Quyền hạn | File Mã Nguồn Đối Chiếu |
-| :--- | :--- | :--- | :--- |
-| **`Admin`** | Quản trị viên hệ thống (`ROLE_ADMIN`) | Toàn quyền quản trị hệ thống: Quản lý người dùng, xem KPI Dashboard, phê duyệt xét duyệt, phê duyệt tiêu hủy, xem nhật ký kiểm toán, cấu hình hệ thống. | `Role.java`, `SecurityConfig.java`, `UsersPage.tsx` |
-| **`Staff`** | Chuyên viên nghiệp vụ (`ROLE_STAFF`) | Người dùng tác nghiệp chính: Tải lên tài liệu, tạo phiên bản mới, gửi yêu cầu xét duyệt, ký số điện tử trên tài liệu được phân công, chia sẻ tài liệu. | `Role.java`, `DocumentsPage.tsx`, `UploadModal.tsx` |
-| **`User`** | Người dùng cơ bản (`ROLE_USER`) | Tra cứu tài liệu công khai / nội bộ được chia sẻ, xem trước trực tuyến, tải xuống tệp nhị phân, lưu bộ lọc tìm kiếm cá nhân. | `Role.java`, `DocumentsPage.tsx` |
-| **`PublicGuest`** | Khách vãng lai / Đối tác | Truy cập cổng tra cứu công khai `/verify` không cần đăng nhập để tải tệp hoặc kiểm tra mã băm xác thực chữ ký số X.509. | `PublicVerifyController.java`, `PublicVerifyPage.tsx` |
-| **`SystemEngine`** | Hệ thống tiến trình nền | Thực thi các tác vụ nền tự động: Trích xuất OCR (Tesseract), Vector hóa ngữ nghĩa AI (ONNX Runtime), Quét tài liệu hết hạn lưu trữ (Scheduled Job). | `TesseractOcrService.java`, `OnnxEmbeddingService.java`, `DispositionJob.java` |
+| Nhóm | Use Case chính | API/điểm tích hợp đã đối chiếu |
+| --- | --- | --- |
+| 1. Đăng nhập và quản lý tài khoản | Đăng nhập; đăng xuất; quản lý người dùng; sửa vai trò; khóa/mở tài khoản | POST /api/auth/login; POST /api/auth/logout; GET/POST /api/admin/users; PUT /api/admin/users/{id}; PATCH hoặc PUT /api/admin/users/{id}/status |
+| 2. Tài liệu và phiên bản | Danh sách, chi tiết, tải lên, tải xuống, xem trước, sửa metadata, thêm phiên bản, xem lịch sử, khôi phục phiên bản, lưu trữ/khôi phục hoạt động | GET/POST /api/documents; GET /api/documents/{id}; PUT /api/documents/{id}; GET /api/documents/{id}/preview; GET /api/documents/{id}/download; POST/GET /api/documents/{id}/versions; POST /api/documents/{id}/versions/{versionNumber}/restore; POST /api/documents/{id}/archive; POST /api/documents/{id}/unarchive |
+| 3. Quyền truy cập tài liệu | Xem quyền; cấp quyền; thay đổi quyền; thu hồi quyền; đổi access mode | GET/POST /api/documents/{id}/permissions; PUT/DELETE /api/documents/{id}/permissions/{userId}; PUT /api/documents/{id}/access-mode |
+| 4. Tìm kiếm và lọc đã lưu | Tìm theo từ khóa; tìm ngữ nghĩa AI; tìm kết hợp; lưu/xem/xóa bộ lọc | GET /api/documents với q, documentType, searchScope, searchMode, topK; POST/GET /api/saved-searches; DELETE /api/saved-searches/{id} |
+| 5. Xét duyệt và tiêu hủy | Gửi xét duyệt, xem lịch sử, duyệt/từ chối; gửi/hủy yêu cầu tiêu hủy, xem hàng đợi, duyệt/từ chối | POST /api/documents/{id}/review; GET /api/documents/{id}/reviews; GET /api/admin/reviews; POST /api/admin/reviews/{reviewId}/approve hoặc /reject; POST /api/documents/{id}/disposition hoặc /disposition/cancel; GET /api/admin/dispositions; POST /api/admin/dispositions/{requestId}/approve hoặc /reject |
+| 6. Chữ ký, xác thực và quản trị | Ký phiên bản, kiểm tra toàn vẹn, xác thực công khai, xem dashboard/nhật ký | POST /api/documents/{id}/versions/{vn}/sign; GET /api/documents/{id}/versions/{vn}/integrity; GET /api/public/verify?hash=... hoặc ?docId=...&version=...; POST /api/public/verify-file; GET /api/admin/dashboard; GET /api/admin/audit-logs |
 
----
+**Quy tắc biểu diễn Use Case:**
+- Dùng quan hệ association actor–use case; dùng include cho bước bắt buộc thật sự (ví dụ yêu cầu JWT và kiểm tra quyền ở nghiệp vụ bảo vệ), không bắt buộc vẽ thành một tác nhân riêng.
+- Phê duyệt và từ chối do Admin thao tác; người có quyền sửa tài liệu có thể gửi yêu cầu xét duyệt theo kiểm tra của DocumentReviewService.
+- Không vẽ Use Case "Đặt lại mật khẩu quản trị": EDMS-SEC-201 là chức năng **chưa triển khai**.
+- Không vẽ "Quét tiêu hủy hằng ngày tự tạo yêu cầu" hoặc "Xuất chứng nhận tiêu hủy": chưa có controller/job xác minh cho các hành vi này.
+- Tên package là cách tổ chức sơ đồ, không bắt buộc tương ứng 1:1 với package Java.
 
-## 3. THIẾT KẾ SƠ ĐỒ USE CASE (USE CASE DIAGRAMS)
+## 3. Activity Diagram 1 — Tải tài liệu và xử lý nội dung
 
-### 3.1. Sơ đồ Use Case Tổng Quát Hệ Thống (Package Architecture)
-Hệ thống được tổ chức thành 6 gói Use Case chính:
-1. **`Auth & User Management Package`**
-2. **`Document & Version Repository Package`**
-3. **`Document Access Control (ACL) Package`**
-4. **`Search & Semantic AI Package`**
-5. **`Review & Disposition Workflow Package`**
-6. **`Digital Signature & Public Verification Package`**
+**Swimlane:** Người dùng được phép tải lên | Giao diện React | Spring Boot | PostgreSQL và bộ lưu trữ.
 
-### 3.2. Bảng Danh Mục Use Case Chi Tiết Cho Từng Package
+1. Bắt đầu → chọn "Tải tài liệu" trên DocumentsPage → mở UploadModal.
+2. Nhập metadata và chọn tệp. **Decision:** dữ liệu/định dạng/dung lượng hợp lệ? Không → thông báo lỗi và cho chọn lại; có → gửi multipart POST /api/documents.
+3. Spring Security kiểm tra JWT; DocumentController chuyển dữ liệu cho DocumentService và các dịch vụ lưu trữ. **Decision:** xác thực, quyền và tệp hợp lệ? Không → phản hồi lỗi phù hợp; có → tiếp tục.
+4. Lưu tệp vật lý và bản ghi tài liệu, phiên bản, thông tin liên quan; tạo response theo mã nguồn. Quá trình trích xuất văn bản, OCR và lập chỉ mục ngữ nghĩa được thực hiện bởi dịch vụ tương ứng theo pipeline triển khai.
+5. **Decision:** xử lý trích xuất/OCR/semantic có thành công? Ghi trạng thái kết quả hoặc trạng thái lỗi tương ứng; không vẽ xóa tài liệu hoặc retry tự động khi chưa được code xác nhận.
+6. Trả response lên UI, cập nhật danh sách; kết thúc.
 
-#### Package 1: Auth & User Management
-| Use Case ID | Tên Use Case | Primary Actor | Secondary Actor | Pre-condition | Post-condition | API Liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UC-01** | Đăng nhập hệ thống | `User`, `Staff`, `Admin` | — | Tài khoản tồn tại và trạng thái Active | Nhận Access Token (JWT) & Refresh Token | `POST /api/auth/login` |
-| **UC-02** | Đăng xuất | `User`, `Staff`, `Admin` | — | Đã đăng nhập | Token được đưa vào danh sách đen | `POST /api/auth/logout` |
-| **UC-03** | Quản lý người dùng | `Admin` | — | Đăng nhập với quyền `ROLE_ADMIN` | Danh sách người dùng được cập nhật | `GET /api/users`, `POST /api/users` |
-| **UC-04** | Thay đổi vai trò người dùng | `Admin` | — | Đăng nhập với quyền `ROLE_ADMIN` | Vai trò đổi giữa ADMIN, STAFF, USER | `PUT /api/users/{id}/role` |
-| **UC-05** | Khóa/Mở tài khoản | `Admin` | — | Đăng nhập với quyền `ROLE_ADMIN` | Trạng thái tài khoản đổi Active/Locked | `PUT /api/users/{id}/status` |
+**Chú thích khi vẽ:** Không mặc định OCR/AI và audit chạy ba nhánh Fork song song hoặc Join chặn trả response nếu chưa kiểm tra lớp service thực thi. Tham chiếu: DocumentController, DocumentService, ContentExtractionService, OcrService, SemanticIndexingService, LocalEmbeddingService, FileStorageService.
 
-#### Package 2: Document & Version Repository
-| Use Case ID | Tên Use Case | Primary Actor | Secondary Actor | Pre-condition | Post-condition | API Liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UC-06** | Xem danh sách tài liệu | `User`, `Staff`, `Admin` | — | Đã xác thực | Trả về danh sách tài liệu có quyền xem | `GET /api/documents` |
-| **UC-07** | Tải lên tài liệu mới | `Staff`, `Admin` | `SystemEngine` | Đã xác thực, tệp <= 20MB | Tài liệu V1.0 được lưu, kích hoạt OCR/AI | `POST /api/documents` |
-| **UC-08** | Cập nhật siêu dữ liệu | Tác giả, `Admin` | — | Có quyền WRITE trên tài liệu | Siêu dữ liệu tài liệu được cập nhật | `PUT /api/documents/{id}` |
-| **UC-09** | Tải lên phiên bản mới | `Staff`, `Admin` | `SystemEngine` | Có quyền WRITE, chọn tệp mới | Tạo version mới (V1.1/V2.0), lưu hash | `POST /api/documents/{id}/versions` |
-| **UC-10** | Tải xuống tệp tài liệu | `User`, `Staff`, `Admin` | — | Có quyền READ trên tài liệu | Tải tệp nhị phân về máy client | `GET /api/documents/{id}/download` |
-| **UC-11** | Xem lịch sử phiên bản | `User`, `Staff`, `Admin` | — | Có quyền READ trên tài liệu | Danh sách các version và hash SHA-256 | `GET /api/documents/{id}/versions` |
-| **UC-12** | Khôi phục phiên bản cũ | `Admin` | — | Đăng nhập quyền `ROLE_ADMIN` | Phiên bản cũ thành phiên bản hiện tại | `POST /api/documents/{id}/versions/{vId}/revert` |
+## 4. Activity Diagram 2 — Xét duyệt phiên bản tài liệu
 
-#### Package 3: Document Access Control (ACL)
-| Use Case ID | Tên Use Case | Primary Actor | Secondary Actor | Pre-condition | Post-condition | API Liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UC-13** | Xem quyền truy cập | Tác giả, `Admin` | — | Là chủ sở hữu hoặc `ROLE_ADMIN` | Bảng danh sách phân quyền chi tiết | `GET /api/documents/{id}/permissions` |
-| **UC-14** | Cấp quyền người dùng | Tác giả, `Admin` | — | Là chủ sở hữu hoặc `ROLE_ADMIN` | Thêm bản ghi phân quyền người dùng | `POST /api/documents/{id}/permissions` |
-| **UC-15** | Thu hồi quyền truy cập | Tác giả, `Admin` | — | Là chủ sở hữu hoặc `ROLE_ADMIN` | Bản ghi phân quyền bị xóa | `DELETE /api/documents/{id}/permissions/{pId}` |
+**Swimlane:** Người được quyền sửa | Backend | Admin.
 
-#### Package 4: Search & Semantic AI
-| Use Case ID | Tên Use Case | Primary Actor | Secondary Actor | Pre-condition | Post-condition | API Liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UC-16** | Tìm kiếm từ khóa | `User`, `Staff`, `Admin` | — | Đã xác thực | Danh sách tài liệu khớp tiêu đề/nội dung | `GET /api/search/documents?q=` |
-| **UC-17** | Tìm kiếm ngữ nghĩa AI | `User`, `Staff`, `Admin` | `SystemEngine` | Mô hình ONNX AVAILABLE | Danh sách đoạn văn khớp vector Cosine | `GET /api/search/semantic?query=` |
-| **UC-18** | Lưu bộ lọc tìm kiếm | `User`, `Staff`, `Admin` | — | Đã xác thực | Bộ lọc được lưu vào cơ sở dữ liệu | `POST /api/users/saved-searches` |
+1. Chọn tài liệu đang ở lifecycle ACTIVE, có quyền sửa → gửi POST /api/documents/{id}/review.
+2. Backend từ chối nếu tài liệu ARCHIVED/DISPOSED, thiếu quyền, hoặc phiên bản hiện tại đã có yêu cầu PENDING/APPROVED/REJECTED theo quy tắc DocumentReviewService.
+3. Hợp lệ → tạo DocumentReview(versionNumber hiện tại, status=PENDING), lưu SQL, ghi nhật ký và gửi thông báo.
+4. Admin xem GET /api/admin/reviews và quyết định:
+   - **Phê duyệt:** POST /api/admin/reviews/{reviewId}/approve → chỉ từ PENDING sang APPROVED; ghi người xử lý, thời điểm, audit, thông báo.
+   - **Từ chối:** POST /api/admin/reviews/{reviewId}/reject với lý do bắt buộc → PENDING sang REJECTED; ghi audit, thông báo.
+5. **Nhánh thay thế:** Nếu tải lên phiên bản mới trong khi bản cũ PENDING, DocumentReviewService.supersedePendingReviews() chuyển yêu cầu chờ của phiên bản cũ thành SUPERSEDED. **Không tự tạo yêu cầu PENDING cho phiên bản mới nếu người dùng chưa gửi yêu cầu.**
+6. Kết thúc. **Không đổi documents.lifecycle_status sang APPROVED hoặc DRAFT** vì enum LifecycleStatus chỉ có ACTIVE/ARCHIVED/DISPOSED. Review status và lifecycle status là hai khái niệm khác nhau.
 
-#### Package 5: Review & Disposition Workflow
-| Use Case ID | Tên Use Case | Primary Actor | Secondary Actor | Pre-condition | Post-condition | API Liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UC-19** | Gửi yêu cầu xét duyệt | `Staff` | — | Tài liệu ở trạng thái DRAFT/ACTIVE | Tạo bản ghi Review trạng thái PENDING | `POST /api/reviews` |
-| **UC-20** | Phê duyệt xét duyệt | `Admin` | — | Quyền `ROLE_ADMIN`, review PENDING | Review sang APPROVED, tài liệu sang APPROVED | `POST /api/reviews/{id}/approve` |
-| **UC-21** | Từ chối xét duyệt | `Admin` | — | Quyền `ROLE_ADMIN`, nhập lý do | Review sang REJECTED, tài liệu về DRAFT | `POST /api/reviews/{id}/reject` |
-| **UC-22** | Thay thế xét duyệt | `SystemEngine` | — | Có version mới khi review đang PENDING | Review cũ chuyển trạng thái SUPERSEDED | Triggered khi tạo version mới |
-| **UC-23** | Xem hàng đợi tiêu hủy | `Admin` | — | Quyền `ROLE_ADMIN` | Danh sách tài liệu quá hạn retention | `GET /api/dispositions` |
-| **UC-24** | Phê duyệt tiêu hủy | `Admin` | — | Quyền `ROLE_ADMIN`, disposition PENDING | Trạng thái sang APPROVED, xóa vật lý tệp | `POST /api/dispositions/{id}/approve` |
-| **UC-25** | Hủy bỏ tiêu hủy | `Admin` | — | Quyền `ROLE_ADMIN` | Trạng thái sang CANCELLED, giữ lại tài liệu | `POST /api/dispositions/{id}/cancel` |
+## 5. Activity Diagram 3 — Yêu cầu tiêu hủy tài liệu
 
-#### Package 6: Digital Signature & Public Verification
-| Use Case ID | Tên Use Case | Primary Actor | Secondary Actor | Pre-condition | Post-condition | API Liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UC-26** | Ký số tài liệu | `Staff`, `Admin` | — | Tài liệu APPROVED, KeyStore sẵn sàng | Tạo chữ ký SHA256withRSA lưu vào DB | `POST /api/documents/{id}/sign` |
-| **UC-27** | Xem trước trực tuyến | `User`, `Staff`, `Admin` | — | Có quyền READ trên tài liệu | Hiển thị PDF Canvas / Image Preview | `GET /api/documents/{id}/preview` |
-| **UC-28** | Xác minh chữ ký nội bộ | `User`, `Staff`, `Admin` | — | Tài liệu đã ký số | Hiển thị thông tin chứng chỉ và tính toàn vẹn | `GET /api/documents/{id}/verify-signature` |
-| **UC-29** | Tra cứu chữ ký công khai | `PublicGuest` | — | Không cần đăng nhập (`/verify`) | Trả về kết quả xác thực hợp lệ/không hợp lệ | `POST /api/public/verify-document` |
+**Swimlane:** Chủ tài liệu/Admin được phép | Backend | Admin xét duyệt.
 
----
+1. Gửi POST /api/documents/{id}/disposition, kèm reason.
+2. Backend kiểm tra: người gửi có quyền; tài liệu lifecycle=ARCHIVED; legalHold=false; retentionUntil đã đến hạn; không có review PENDING và không có disposition PENDING trùng.
+3. **Decision:** sai một điều kiện → từ chối và trả lỗi; đủ điều kiện → tạo disposition=PENDING, ghi audit và thông báo.
+4. Admin xem GET /api/admin/dispositions, quyết định:
+   - **Approve:** POST /api/admin/dispositions/{requestId}/approve. Backend **kiểm tra lại tất cả điều kiện**; nếu hợp lệ → disposition=APPROVED, document.lifecycleStatus=DISPOSED, ghi người xử lý/audit/thông báo.
+   - **Reject:** POST /api/admin/dispositions/{requestId}/reject → disposition=REJECTED, ghi lý do/audit.
+   - **Cancel:** POST /api/documents/{id}/disposition/cancel với quyền tương ứng → disposition=PENDING thành CANCELLED; hoặc yêu cầu chờ được hủy khi tài liệu unarchive thông qua DocumentDispositionService.cancelPendingDispositionsOnUnarchive().
+5. Kết thúc. **Không xóa tệp vật lý**: approveDisposition() ghi rõ logical disposition, NO PHYSICAL DELETION. Không vẽ lifecycle DESTROYED; enum LifecycleStatus dùng DISPOSED.
 
-## 4. THIẾT KẾ SƠ ĐỒ HOẠT ĐỘNG (ACTIVITY DIAGRAMS)
+## 6. Sequence Diagram 1 — Đăng nhập và đăng xuất
 
-### 4.1. Sơ đồ Hoạt Động: Tải Lên Tài Liệu & Xử Lý Bất Đồng Bộ (Upload & Indexing)
-- **Start Node:** Chuyên viên (`Staff`) nhấn nút "Tải tài liệu mới" trên `DocumentsPage`.
-- **Action 1:** Hệ thống mở `UploadModal`.
-- **Action 2:** Chuyên viên chọn tệp (.pdf, .docx, .png, .jpg) và nhập Title, Document Type, Access Mode.
-- **Decision 1 (Client Validation):**
-  - *Branch False (Dung lượng > 20MB hoặc tệp rỗng):* Hiển thị thông báo lỗi, yêu cầu chọn lại.
-  - *Branch True (Hợp lệ):* Gửi `MultipartRequest` đến `POST /api/documents`.
-- **Action 3:** `DocumentController` tiếp nhận request, xác thực JWT Token.
-- **Action 4:** `FileStorageService` lưu tệp vật lý vào `/app/storage/uploads/` và tính mã băm SHA-256.
-- **Action 5:** `DocumentService` lưu bản ghi `documents` (với `lifecycle_status = 'ACTIVE'`) và `document_versions` (với `version_number = 1`).
-- **Fork Node (Xử lý bất đồng bộ):**
-  - **Nhánh A (OCR Engine):**
-    - Kiểm tra loại tệp: nếu là PDF hoặc hình ảnh -> Kích hoạt Tesseract OCR tiếng Việt + tiếng Anh.
-    - Trích xuất văn bản -> Cập nhật `ocr_text` và đổi `ocr_status = 'READY'`.
-  - **Nhánh B (Semantic AI Engine):**
-    - Chia văn bản thành các đoạn (chunks 512 tokens).
-    - Gọi mô hình ONNX `multilingual-e5-small-onnx-int8-v1` -> Sinh vector 384 chiều.
-    - Lưu vào bảng `document_semantic_chunks` và đổi `semantic_status = 'READY'`.
-  - **Nhánh C (Audit Logging):**
-    - Ghi nhận bản ghi kiểm toán vào bảng `audit_logs` (Action: `DOCUMENT_CREATE`).
-- **Join Node:** Hoàn tất lưu trữ và lập chỉ mục.
-- **Action 6:** Gửi WebSocket Notification báo tải lên thành công.
-- **End Node:** `DocumentsPage` cập nhật hiển thị tài liệu mới trong bảng.
+**Lifeline:** User | LoginPage | AuthController | AuthService | AuthenticationManager | UserRepository | PostgreSQL | JwtTokenProvider | AuditService.
 
-### 4.2. Sơ đồ Hoạt Động: Vòng Đời Xét Duyệt Tài Liệu (Review Workflow)
-- **Start Node:** Chuyên viên nhấn "Gửi xét duyệt" trên hồ sơ tài liệu.
-- **Action 1:** Nhập ghi chú thẩm định, gửi request `POST /api/reviews`.
-- **Action 2:** Hệ thống tạo bản ghi `document_reviews` với `status = 'PENDING'`.
-- **Action 3:** Quản trị viên (`Admin`) truy cập `ReviewQueuePage`.
-- **Decision 1 (Admin Thẩm định):**
-  - **Trường hợp 1 (Phê duyệt - Approve):**
-    - Admin nhấn "Phê duyệt" -> `POST /api/reviews/{id}/approve`.
-    - Hệ thống chuyển `document_reviews.status = 'APPROVED'`.
-    - Cập nhật `documents.lifecycle_status = 'APPROVED'`.
-    - Ghi nhận `audit_logs` và gửi thông báo chúc mừng đến tác giả.
-  - **Trường hợp 2 (Từ chối - Reject):**
-    - Admin nhập lý do từ chối -> `POST /api/reviews/{id}/reject`.
-    - Hệ thống chuyển `document_reviews.status = 'REJECTED'`.
-    - Cập nhật `documents.lifecycle_status = 'DRAFT'`.
-    - Gửi thông báo yêu cầu sửa đổi đến tác giả.
-  - **Trường hợp 3 (Thay thế - Superseded):**
-    - Khi yêu cầu đang `PENDING`, tác giả tải lên phiên bản mới V1.1 -> Hệ thống tự động chuyển yêu cầu xét duyệt cũ thành `status = 'SUPERSEDED'`.
-    - Tạo yêu cầu xét duyệt mới cho phiên bản V1.1.
-- **End Node:** Kết thúc quy trình xét duyệt.
+1. User nhập username/password → LoginPage gửi POST /api/auth/login.
+2. AuthController.login(request, clientIp) → AuthService.login().
+3. AuthService kiểm tra LoginRateLimiterService; nếu vượt ngưỡng → trả lỗi, ghi audit.
+4. AuthenticationManager.authenticate() sử dụng UserDetails/BCrypt và UserRepository. **alt [sai thông tin/không hợp lệ]:** trả lỗi xác thực, ghi LOGIN_FAILED; **alt [thành công]:** JwtTokenProvider.generateToken(authentication), lấy User, ghi LOGIN_SUCCESS.
+5. AuthService trả LoginResponse gồm **token, tokenType, username, fullName, role**; UI lưu một token và điều hướng.
+6. Đăng xuất: POST /api/auth/logout → AuthService.logout(username) ghi LOGOUT, AuthController clear SecurityContextHolder; frontend xóa token bên client theo hành vi UI.
 
-### 4.3. Sơ đồ Hoạt Động: Quản Lý Tiêu Hủy Tài Liệu (Disposition Lifecycle)
-- **Start Node:** Định kỳ mỗi ngày, Scheduled Job `DispositionJob` tự động kích hoạt.
-- **Action 1:** Quét các tài liệu có `retention_until <= CURRENT_DATE` và `legal_hold = false`.
-- **Action 2:** Tự động tạo bản ghi `document_dispositions` với `status = 'PENDING'`.
-- **Action 3:** Admin truy cập `DispositionQueuePage`.
-- **Decision 1 (Quyết định xử lý hồ sơ quá hạn):**
-  - **Trường hợp 1 (Phê duyệt tiêu hủy):**
-    - Admin nhấn "Tiêu hủy" -> `POST /api/dispositions/{id}/approve`.
-    - Chuyển `disposition.status = 'APPROVED'`, `documents.lifecycle_status = 'DESTROYED'`.
-    - Xóa các tệp nhị phân trong `/app/storage/uploads/`.
-    - Tạo chứng nhận tiêu hủy bất biến trong `audit_logs`.
-  - **Trường hợp 2 (Hủy bỏ tiêu hủy - Cancel):**
-    - Admin quyết định tiếp tục lưu trữ tài liệu nghiệp vụ -> Nhấn "Hủy bỏ" (`CANCELLED`).
-    - Chuyển `disposition.status = 'CANCELLED'`.
-    - Gia hạn ngày `retention_until` mới.
-  - **Trường hợp 3 (Từ chối tiêu hủy - Reject):**
-    - Admin từ chối yêu cầu tiêu hủy -> Chuyển `disposition.status = 'REJECTED'`.
-- **End Node:** Hoàn tất chu trình kiểm soát vòng đời tài liệu.
+**Không vẽ** refreshToken, generateRefreshToken(), JWT blacklist hoặc thời hạn 15 phút/7 ngày vì không có trong LoginResponse/AuthService trên commit kiểm tra. Logout server-side **không chứng minh JWT cũ đã bị thu hồi ngay**.
 
----
+## 7. Sequence Diagram 2 — Tìm kiếm ngữ nghĩa ONNX
 
-## 5. THIẾT KẾ SƠ ĐỒ TRÌNH TỰ (SEQUENCE DIAGRAMS)
+**Lifeline:** Người dùng | DocumentsPage | DocumentController | SemanticSearchService | DocumentRepository/DocumentVersionRepository | DocumentSemanticChunkRepository | LocalEmbeddingService | PostgreSQL.
 
-### 5.1. Sequence Diagram 1: Xác thực Đăng nhập & Cấp phát JWT Token
-- **Actors & Objects:**
-  - `User`: Actor
-  - `LoginPage`: React UI
-  - `AuthController`: Spring Boot REST Controller
-  - `AuthService`: Service tầng nghiệp vụ
-  - `AuthenticationManager`: Spring Security Engine
-  - `JwtTokenProvider`: Thành phần sinh mã JWT
-  - `UserRepository`: Tầng truy xuất dữ liệu
-  - `Database`: PostgreSQL (`users`)
-- **Luồng thông điệp:**
-  1. `User -> LoginPage`: Nhập username, password -> Nhấn "Đăng nhập"
-  2. `LoginPage -> AuthController`: `POST /api/auth/login { username, password }`
-  3. `AuthController -> AuthService`: `login(loginRequest)`
-  4. `AuthService -> AuthenticationManager`: `authenticate(new UsernamePasswordAuthenticationToken(user, pass))`
-  5. `AuthenticationManager -> UserRepository`: `findByUsername(username)`
-  6. `UserRepository -> Database`: `SELECT * FROM users WHERE username = ?`
-  7. `Database --> UserRepository`: Trả về `UserEntity` (mật khẩu băm BCrypt, vai trò `ROLE_STAFF`)
-  8. `AuthenticationManager`: So khớp mật khẩu với BCrypt `matches()`
-     - *Alt [Mật khẩu sai hoặc tài khoản bị khóa]:*
-       - `AuthenticationManager --> AuthService`: Quăng ngoại lệ `BadCredentialsException`
-       - `AuthService --> AuthController`: Trả về HTTP 401 Unauthorized
-       - `AuthController --> LoginPage`: Hiển thị thông báo "Tên đăng nhập hoặc mật khẩu không chính xác"
-     - *Alt [Xác thực thành công]:*
-       - `AuthenticationManager --> AuthService`: Trả về đối tượng `Authentication`
-       - `AuthService -> JwtTokenProvider`: `generateAccessToken(user)`, `generateRefreshToken(user)`
-       - `JwtTokenProvider --> AuthService`: Trả về JWT Access Token (hạn 15 phút) & Refresh Token (hạn 7 ngày)
-       - `AuthService --> AuthController`: Trả về `JwtAuthResponseDto`
-       - `AuthController --> LoginPage`: HTTP 200 OK `{ accessToken, refreshToken, role: 'ROLE_STAFF' }`
-       - `LoginPage`: Lưu token vào LocalStorage/Memory, điều hướng sang `DocumentsPage`.
+1. Người dùng chọn tìm kiếm ngữ nghĩa và nhập q → GET /api/documents?q=...&searchMode=SEMANTIC&topK=....
+2. DocumentController xác thực tham số, gọi SemanticSearchService.search(query, username, isAdmin, topK).
+3. Dịch vụ xác định **tài liệu có quyền truy cập theo ACL**, chỉ lấy phiên bản hiện tại đã semantic READY và đúng model.
+4. Đọc chunks được phép từ PostgreSQL bằng DocumentSemanticChunkRepository.
+5. LocalEmbeddingService.embedQuery() sinh vector truy vấn từ mô hình cục bộ ONNX.
+6. SemanticSearchService tính **cosine similarity trong Java** (LocalEmbeddingService.cosineSimilarity()), lấy điểm lớn nhất theo tài liệu, lọc minScore, sắp xếp và giới hạn topK.
+7. DocumentController dựng DocumentResponse với semanticMatched, semanticScore, matchSnippet; trả kết quả về DocumentsPage.
 
-### 5.2. Sequence Diagram 2: Tìm kiếm Ngữ nghĩa AI (Semantic Vector Search)
-- **Actors & Objects:**
-  - `Staff / User`: Actor
-  - `DocumentsPage`: React UI
-  - `SemanticSearchController`: Controller tiếp nhận truy vấn
-  - `OnnxEmbeddingService`: Engine AI nhúng cục bộ
-  - `SemanticChunkRepository`: Tầng truy vấn vector database
-  - `Database`: PostgreSQL (`document_semantic_chunks`, `documents`)
-- **Luồng thông điệp:**
-  1. `User -> DocumentsPage`: Chọn chế độ "Ngữ nghĩa AI" -> Nhập câu hỏi nghiệp vụ -> Nhấn "Tìm kiếm"
-  2. `DocumentsPage -> SemanticSearchController`: `GET /api/search/semantic?query={câu hỏi}&threshold=0.7`
-  3. `SemanticSearchController -> OnnxEmbeddingService`: `embedQuery(queryText)`
-  4. `OnnxEmbeddingService`: Tokenize câu hỏi -> Đưa qua mô hình ONNX `multilingual-e5-small-onnx-int8-v1`
-  5. `OnnxEmbeddingService --> SemanticSearchController`: Trả về vector float[384]
-  6. `SemanticSearchController -> SemanticChunkRepository`: `findTopSimilarChunks(vector, threshold, limit)`
-  7. `SemanticChunkRepository -> Database`: Tính khoảng cách Cosine `cosine_similarity(chunk_vector, query_vector)`
-  8. `Database --> SemanticChunkRepository`: Trả về các đoạn văn bản có điểm Cosine cao nhất (ví dụ score: `0.8510`)
-  9. `SemanticChunkRepository --> SemanticSearchController`: Danh sách `DocumentSemanticChunk` kèm `Document`
-  10. `SemanticSearchController --> DocumentsPage`: HTTP 200 OK `[{ docId, title, chunkText, similarityScore: 0.8510, semanticMatched: true }]`
-  11. `DocumentsPage`: Hiển thị danh sách kết quả kèm huy hiệu điểm tương đồng Modern Aurora.
+**Không vẽ** SemanticSearchController, OnnxEmbeddingService, câu SQL cosine_similarity hoặc bảng vector chuyên dụng không tồn tại. DocumentSemanticChunk lưu embedding dưới dạng BYTEA.
 
-### 5.3. Sequence Diagram 3: Ký số Điện tử & Xác thực Chữ ký Công khai
-- **Actors & Objects:**
-  - `Staff`: Actor thực hiện ký số
-  - `PublicGuest`: Khách vãng lai tra cứu
-  - `PreviewModal`: React UI nội bộ
-  - `PublicVerifyPage`: React UI công khai (`/verify`)
-  - `SignatureController`: REST Controller chữ ký nội bộ
-  - `PublicVerifyController`: REST Controller công khai
-  - `SignatureService`: Nghiệp vụ ký số & băm SHA-256
-  - `KeyStoreService`: Dịch vụ quản lý khóa PKCS#12 (`/app/keys/edms-signing.p12`)
-  - `Database`: PostgreSQL (`document_versions`)
-- **Luồng thông điệp Ký số nội bộ:**
-  1. `Staff -> PreviewModal`: Nhấn "Ký số tài liệu"
-  2. `PreviewModal -> SignatureController`: `POST /api/documents/{id}/sign`
-  3. `SignatureController -> SignatureService`: `signDocument(docId, userPrincipal)`
-  4. `SignatureService -> KeyStoreService`: `getPrivateKey()`, `getSigningCertificate()`
-  5. `KeyStoreService`: Đọc chứng chỉ X.509 self-signed RSA-2048 từ `/app/keys/edms-signing.p12`
-  6. `SignatureService`: Băm tệp bằng SHA-256 -> Mã hóa bằng khóa riêng RSA (`SHA256withRSA`)
-  7. `SignatureService -> Database`: Lưu `signature_bytes`, `signature_algorithm`, `signer_username`, `signed_at` vào `document_versions`
-  8. `SignatureService --> SignatureController`: Trả về `SignatureResultDto`
-  9. `SignatureController --> PreviewModal`: HTTP 200 OK -> Hiển thị huy hiệu "Đã ký số xác thực hợp lệ"
-- **Luồng thông điệp Tra cứu Công khai:**
-  1. `PublicGuest -> PublicVerifyPage`: Tải tệp văn bản cần kiểm tra lên `/verify` -> Nhấn "Xác thực"
-  2. `PublicVerifyPage -> PublicVerifyController`: `POST /api/public/verify-document` (Multipart tệp)
-  3. `PublicVerifyController -> SignatureService`: `verifyExternalFile(fileBytes)`
-  4. `SignatureService`: Tính mã băm SHA-256 -> Đối soát với `file_hash` và giải mã chữ ký bằng chứng chỉ công khai X.509
-  5. `SignatureService --> PublicVerifyController`: Trả về `{ valid: true, signer: 'hieu', signedAt: '...', certSerial: '...' }`
-  6. `PublicVerifyController --> PublicVerifyPage`: HTTP 200 OK
-  7. `PublicVerifyPage`: Hiển thị thẻ xác thực thành công màu xanh Aurora, thông tin người ký và chứng chỉ tự ký X.509.
+## 8. Sequence Diagram 3 — Ký và tra cứu chữ ký
 
----
+**Lifeline ký:** Chủ tài liệu/Admin | PreviewModal | DocumentIntegrityController | SignatureService | DocumentRepository/DocumentVersionRepository | FileStorageService | IntegrityService | KeyStoreService | PostgreSQL | AuditService.
 
-## 6. THIẾT KẾ SƠ ĐỒ LỚP THỰC THỂ (CLASS DIAGRAM — ENTITY MODEL)
+1. Người có quyền chọn phiên bản → POST /api/documents/{id}/versions/{vn}/sign.
+2. SignatureService kiểm tra tài liệu tồn tại, lifecycle không ARCHIVED/DISPOSED, caller là **owner hoặc Admin**, đúng phiên bản và chưa ký.
+3. Đọc bytes tệp; so sánh SHA-256 với hash đã lưu (hoặc stamp hash với bản cũ chưa có), từ chối nếu tệp bị sửa đổi.
+4. KeyStoreService cung cấp private key và X.509 self-signed; SignatureService ký bytes bằng SHA256withRSA.
+5. Lưu signatureBytes, signatureAlgorithm, signerUsername, signedAt, certSerialNumber của DocumentVersion; ghi nhật ký; trả SignDocumentResponse.
+6. **alt [thiếu quyền, sai trạng thái, ký lại, hash mismatch, lỗi IO]:** phản hồi lỗi; không tạo chữ ký thành công.
 
-Ánh xạ 1:1 với 10 lớp Entity JPA trong `backend/src/main/java/com/edms/entity/`:
+**Lifeline kiểm chứng công khai:** PublicGuest | VerifyPage | PublicVerificationController | IntegrityService | Repository | PostgreSQL.
 
-```mermaid
-classDiagram
-    class User {
-        +Long id
-        +String username
-        +String password
-        +String email
-        +String fullName
-        +String department
-        +Role role
-        +boolean active
-        +Instant createdAt
-        +Instant updatedAt
-    }
+1. Khách chọn một cách tra cứu:
+   - GET /api/public/verify?hash=... hoặc ?docId=...&version=..., hoặc
+   - POST /api/public/verify-file với multipart file.
+2. PublicVerificationController tra bản ghi phù hợp, đối chiếu hash/toàn vẹn và trạng thái chữ ký qua IntegrityService, trả PublicVerificationResponse.
+3. UI hiển thị có tìm thấy hay không, toàn vẹn, trạng thái chữ ký và thông tin chứng chỉ có sẵn.
+4. Chứng chỉ X.509 là **tự ký nội bộ**; không khẳng định chứng thư do CA công cộng cấp hoặc chữ ký đáp ứng mọi yêu cầu pháp lý.
 
-    class Role {
-        <<enumeration>>
-        ROLE_USER
-        ROLE_STAFF
-        ROLE_ADMIN
-    }
+## 9. Class Diagram — mười JPA Entity
 
-    class Document {
-        +Long id
-        +String title
-        +String description
-        +String documentType
-        +String accessMode
-        +String lifecycleStatus
-        +boolean legalHold
-        +LocalDate retentionUntil
-        +String createdBy
-        +Instant createdAt
-        +Instant updatedAt
-        +Integer currentVersionNumber
-    }
+**Nguồn:** backend/src/main/java/com/edms/entity. Phần liệt kê chọn các field trọng yếu để bố cục dễ đọc. Khi dựng lớp chi tiết, giữ **đúng tên, kiểu và thuộc tính thật**; không tự thêm trường.
 
-    class DocumentVersion {
-        +Long id
-        +Long documentId
-        +Integer versionNumber
-        +String originalFileName
-        +String storedFileName
-        +String contentType
-        +Long fileSize
-        +String uploadedBy
-        +String fileHash
-        +String hashAlgorithm
-        +String ocrStatus
-        +String ocrLanguage
-        +String ocrText
-        +String semanticStatus
-        +Integer semanticChunkCount
-        +byte[] signatureBytes
-        +String signatureAlgorithm
-        +String signerUsername
-        +Instant signedAt
-        +Instant createdAt
-    }
+| Entity | Trường quan trọng trong source | Ghi chú |
+| --- | --- | --- |
+| User | id:Long; username:String; password:String; fullName:String; email:String; role:Role; enabled:boolean; createdAt:Instant | Không có department, active, updatedAt |
+| Document | id:Long; title:String; description:String; documentType:String; originalFileName:String; storedFileName:String; contentType:String; fileSize:Long; createdBy:String; accessMode:AccessMode; currentVersionNumber:Integer; lifecycleStatus:LifecycleStatus; retentionUntil:LocalDate; legalHold:boolean; archivedAt:Instant; disposedAt:Instant; createdAt:Instant; updatedAt:Instant | lifecycle: ACTIVE/ARCHIVED/DISPOSED |
+| DocumentVersion | id:Long; document:Document; versionNumber:Integer; uploadedBy:String; storedFileName:String; fileHash:String; hashAlgorithm:String; ocrStatus:OcrStatus; ocrText:String; semanticStatus:SemanticStatus; semanticChunkCount:Integer; signatureBytes:byte[]; signatureAlgorithm:String; signedAt:Instant; certSerialNumber:String | Có các field extraction/semantic khác, tham chiếu Entity.java |
+| DocumentPermission | id:Long; document:Document; user:User; permission:PermissionType; createdAt:Instant | user là quan hệ JPA; không có expiresAt |
+| DocumentReview | id:Long; document:Document; versionNumber:Integer; status:ReviewStatus; submittedBy:String; submittedAt:Instant; reviewedBy:String; reviewedAt:Instant; reviewComment:String | Không có versionId, reviewerUsername |
+| DocumentDisposition | id:Long; document:Document; versionNumber:Integer; status:DispositionStatus; reason:String; requestedBy:String; requestedAt:Instant; reviewedBy:String; reviewedAt:Instant; reviewComment:String; disposedAt:Instant; disposedBy:String | Không có scheduledDate/approvedBy |
+| AuditLog | id:Long; username:String; action:String; resourceType:String; resourceId:String; description:String; timestamp:Instant; ipAddress:String | resourceId kiểu String |
+| Notification | id:Long; recipientUsername:String; type:NotificationType; title:String; message:String; documentId:Long; versionNumber:Integer; relatedEntityType:String; relatedEntityId:Long; read:boolean; createdAt:Instant; readAt:Instant; actionKey:String; eventKey:String | Không giả định mọi Long là FK |
+| SavedSearch | id:Long; name:String; query:String; documentType:String; searchScope:String; searchMode:String; createdBy:String; createdAt:Instant | createdBy là username dạng String, **không có userId** |
+| DocumentSemanticChunk | id:Long; documentVersionId:Long; chunkIndex:Integer; chunkText:String; embeddingBytes:byte[]; embeddingModel:String; embeddingDimension:Integer; contentHash:String; createdAt:Instant | documentVersionId là Long, **không có @ManyToOne** |
 
-    class DocumentPermission {
-        +Long id
-        +Long documentId
-        +Long userId
-        +String permission
-        +Instant grantedAt
-        +Instant expiresAt
-    }
+**Enums cần vẽ khi hữu ích:** Role (ROLE_ADMIN, ROLE_STAFF, ROLE_USER); ReviewStatus (PENDING, APPROVED, REJECTED, SUPERSEDED); DispositionStatus (PENDING, APPROVED, REJECTED, CANCELLED); LifecycleStatus (ACTIVE, ARCHIVED, DISPOSED).
 
-    class DocumentReview {
-        +Long id
-        +Long documentId
-        +Long versionId
-        +String reviewerUsername
-        +ReviewStatus status
-        +String comment
-        +Instant reviewedAt
-        +Instant createdAt
-    }
+**Quan hệ JPA có khai báo rõ:** DocumentVersion → Document (ManyToOne); DocumentPermission → Document và User (ManyToOne); DocumentReview → Document (ManyToOne); DocumentDisposition → Document (ManyToOne). Từ các quan hệ này có thể vẽ multiplicity Document 1 — 0..* Version/Permission/Review/Disposition và User 1 — 0..* Permission.
 
-    class ReviewStatus {
-        <<enumeration>>
-        PENDING
-        APPROVED
-        REJECTED
-        SUPERSEDED
-    }
+**Không áp đặt composition cho mọi liên hệ:** Có trường Long trỏ đến ID không có nghĩa là có association JPA hoặc FK. SavedSearch.createdBy, Notification.documentId, DocumentSemanticChunk.documentVersionId là các field thông thường theo entity đã kiểm tra.
 
-    class DocumentDisposition {
-        +Long id
-        +Long documentId
-        +DispositionStatus status
-        +String requestedBy
-        +String approvedBy
-        +String reason
-        +Instant scheduledDate
-        +Instant completedDate
-        +Instant createdAt
-    }
+## 10. Physical ERD — đối chiếu cột vật lý và khóa
 
-    class DispositionStatus {
-        <<enumeration>>
-        PENDING
-        APPROVED
-        REJECTED
-        CANCELLED
-    }
+**Mười bảng nghiệp vụ:** users, documents, document_versions, document_permissions, document_reviews, document_dispositions, audit_logs, notifications, saved_searches, document_semantic_chunks.
 
-    class AuditLog {
-        +Long id
-        +String action
-        +String username
-        +String resourceType
-        +Long resourceId
-        +String ipAddress
-        +String details
-        +Instant timestamp
-    }
+**Các cột kết nối có căn cứ từ @JoinColumn:** document_versions.document_id → documents.id; document_permissions.document_id → documents.id; document_permissions.user_id → users.id; document_reviews.document_id → documents.id; document_dispositions.document_id → documents.id.
 
-    class Notification {
-        +Long id
-        +String recipientUsername
-        +String title
-        +String message
-        +String type
-        +boolean read
-        +Instant createdAt
-    }
+**Các liên hệ định danh, chưa được xác nhận là FK vật lý:** document_semantic_chunks.document_version_id; saved_searches.created_by; notifications.document_id; audit_logs.resource_id. Không dựng đường FK bắt buộc cho các trường này nếu PostgreSQL không có constraint.
 
-    class SavedSearch {
-        +Long id
-        +Long userId
-        +String name
-        +String searchCriteria
-        +Instant createdAt
-    }
+**Các unique/index được thấy trên JPA:**
+- users.username là UNIQUE.
+- document_versions có UNIQUE (document_id, version_number).
+- document_semantic_chunks có UNIQUE (document_version_id, chunk_index, embedding_model).
+- document_reviews có index trên document_id, version_number, status, submitted_at.
+- audit_logs có index trên username, timestamp, action.
 
-    class DocumentSemanticChunk {
-        +Long id
-        +Long documentVersionId
-        +Integer chunkIndex
-        +String chunkText
-        +float[] embedding
-        +Instant createdAt
-    }
+**BẮT BUỘC kiểm tra schema PostgreSQL trước khi chốt ERD vật lý:** tên FK thật, unique constraint, kiểu cột, nullable và hành động DELETE. Không viết ON DELETE CASCADE nếu chưa tra pg_constraint. Không vẽ saved_searches.user_id (cột đó không xuất hiện trong Entity hiện tại).
 
-    User --> Role : has
-    Document "1" *-- "many" DocumentVersion : contains
-    Document "1" *-- "many" DocumentPermission : controls
-    Document "1" *-- "many" DocumentReview : has
-    Document "1" *-- "many" DocumentDisposition : tracks
-    DocumentVersion "1" *-- "many" DocumentSemanticChunk : splits into
-    DocumentReview --> ReviewStatus : has
-    DocumentDisposition --> DispositionStatus : has
-    User "1" *-- "many" SavedSearch : owns
-```
+Câu SQL **chỉ đọc** để đối chiếu khóa ngoại và hành động xóa:
 
----
+    SELECT c.conname AS ten_khoa,
+           c.conrelid::regclass AS bang_con,
+           pg_get_constraintdef(c.oid) AS dinh_nghia
+    FROM pg_constraint c
+    WHERE c.contype = 'f'
+      AND c.connamespace = 'public'::regnamespace
+    ORDER BY c.conrelid::regclass::text, c.conname;
 
-## 7. THIẾT KẾ SƠ ĐỒ CƠ SỞ DỮ LIỆU VẬT LÝ (PHYSICAL ERD)
+## 11. Hướng dẫn xuất sơ đồ và nghiệm thu
 
-### Bảng Mô Tả Quan Hệ Khóa Chính & Khóa Ngoại (Foreign Keys)
-1. **`document_versions.document_id`** -> `documents.id` (`ON DELETE CASCADE`)
-2. **`document_permissions.document_id`** -> `documents.id` (`ON DELETE CASCADE`)
-3. **`document_permissions.user_id`** -> `users.id` (`ON DELETE CASCADE`)
-4. **`document_reviews.document_id`** -> `documents.id`
-5. **`document_dispositions.document_id`** -> `documents.id`
-6. **`saved_searches.user_id`** -> `users.id` (`ON DELETE CASCADE`)
-7. **`document_semantic_chunks.document_version_id`** -> `document_versions.id` (`ON DELETE CASCADE`)
+1. Dựng trong StarUML các diagram: 1 Use Case tổng quát và các package cần thiết; 3 Activity; 3 Sequence; 1 Class; 1 Physical ERD (có thể dùng mô hình ERD chuyên dụng tương đương nếu StarUML thiếu extension).
+2. Đặt nhãn nghiệp vụ **bằng tiếng Việt**, giữ nguyên tên class/API/enums kỹ thuật để truy vết. Không thêm actor, service, endpoint hoặc nhánh xử lý tưởng tượng.
+3. Xuất file nguồn StarUML .mdj và PNG chất lượng đủ đọc. Kiểm tra lại từng ảnh với Controller/Service trước khi chèn Word.
+4. Soát báo cáo Word 7 chương và ma trận chức năng theo các sửa đổi này. Các file Word/ZIP cục bộ chưa được sửa trong lần cập nhật GitHub này.
+5. Hồ sơ chỉ đạt **DESIGN_REVIEW_READY** sau khi sơ đồ thực tế và Word được kiểm tra; bản Markdown này không tự xác lập kết luận OWNER APPROVED.
 
-### Khóa Duy Nhất & Chỉ Mục (Indexes & Constraints)
-- `users`: UNIQUE (`username`), UNIQUE (`email`).
-- `document_versions`: UNIQUE (`document_id`, `version_number`).
-- `documents`: PRIMARY KEY (`id`).
-- `audit_logs`: INDEX (`username`), INDEX (`timestamp`), INDEX (`action`).
-
----
-
-## 8. HƯỚNG DẪN THÀNH VIÊN VẼ TRÊN STARUML
-
-1. **Khởi động StarUML:** Tạo Project mới, đặt tên `EDMS_System_Design.mdj`.
-2. **Tạo Model:** Chia làm các Package:
-   - `Use Case Model`: Dựng Use Case tổng quát và 6 Use Case Package. Sử dụng các Actor `Admin`, `Staff`, `User`, `PublicGuest`.
-   - `Dynamic Model`:
-     - Vẽ 3 Activity Diagram theo đặc tả luồng và decision nodes tại Mục 4.
-     - Vẽ 3 Sequence Diagram theo cấu trúc đối tượng và thông điệp tại Mục 5.
-   - `Static Model`:
-     - Vẽ Class Diagram thực thể theo 10 Entity và 3 Enum tại Mục 6.
-     - Vẽ Physical ERD theo lược đồ quan hệ tại Mục 7.
-3. **Xuất sơ đồ (Export Diagrams):** Xuất toàn bộ các diagram ra tệp `.png` độ phân giải cao để chèn vào báo cáo Word đồ án HUFLIT.
+**Tài liệu truy vết:** OWNER_UML_CORRECTIONS_2026-11-06.md; Role.java; SecurityConfig.java; AuthController.java; AuthService.java; LoginResponse.java; DocumentController.java; DocumentReviewController.java; AdminReviewController.java; DocumentDispositionController.java; AdminDispositionController.java; DocumentIntegrityController.java; PublicVerificationController.java; SemanticSearchService.java; SignatureService.java; KeyStoreService.java; các entity JPA tại commit 43bea99.
