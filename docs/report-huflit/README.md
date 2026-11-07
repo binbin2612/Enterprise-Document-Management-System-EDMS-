@@ -1,6 +1,6 @@
 # Hồ sơ Đối soát & Bàn giao Minh chứng EDMS Phục vụ Báo cáo HUFLIT
 
-> **Owner review 06/11/2026:** Bản bàn giao Anti đã có đủ tài liệu kiểm kê, nhưng đặc tả StarUML vẫn còn lỗi so với controller/service thật. **Không dùng `STARUML_HANDOFF.md` hoặc Word làm bản nộp cuối** trước khi xử lý [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md). PR #16 giữ Draft.
+> **OWNER REVIEW — 07/11/2026:** `STARUML_HANDOFF.md` đã được **viết lại theo controller/service/entity** tại commit `43bea99`; vẫn cần xuất sơ đồ `.mdj`/PNG và đối chiếu báo cáo Word cục bộ. Kiểm tra mới phát hiện **52/78 dòng** trong `FEATURE_EVIDENCE_MATRIX.md` dẫn tên tệp mã nguồn không tồn tại. **Chưa chốt hồ sơ minh chứng 78 chức năng hoặc báo cáo Word** đến khi xử lý [FEATURE_SOURCE_AUDIT_2026-11-07.md](FEATURE_SOURCE_AUDIT_2026-11-07.md). PR #16 giữ Draft.
 
 
 **Ngày hoàn tất đối soát:** 06/11/2026  
