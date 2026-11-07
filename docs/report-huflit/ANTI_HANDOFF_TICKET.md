@@ -1,6 +1,6 @@
 # Ticket Anti — Kiểm chứng minh chứng EDMS và cập nhật báo cáo HUFLIT
 
-> **ƯU TIÊN P0 — YÊU CẦU HIỆU ĐÍNH UML (OWNER REVIEW 06/11):** Anti đã bàn giao commit `ac50919`, tuy nhiên owner phát hiện nhiều lỗi có thể kiểm chứng từ controller/service tại `43bea99`. Trước khi giao sơ đồ cho Viên Bảo Đức hoặc khóa Word, bắt buộc xử lý toàn bộ checklist và endpoint trong [OWNER_UML_CORRECTIONS_2026-11-06.md](OWNER_UML_CORRECTIONS_2026-11-06.md). Không chỉ sửa tên API; phải sửa logic JWT logout, logical disposition, Semantic Search Java, field Entity và Physical ERD. Giữ PR #16 Draft; không đổi trạng thái nghiệm thu khi chưa có kết quả đối chiếu mới.
+> **ƯU TIÊN P0 MỚI — OWNER REVIEW 07/11/2026:** Bản `STARUML_HANDOFF.md` đã được chủ dự án **viết lại theo mã nguồn** để làm cơ sở vẽ tiếp. Nhiệm vụ Anti tiếp theo là đối chiếu **52/78 dòng có tệp nguồn không tồn tại** và các chức năng/API sai trong [FEATURE_SOURCE_AUDIT_2026-11-07.md](FEATURE_SOURCE_AUDIT_2026-11-07.md), sửa cả ma trận/kiểm kê/Word. Không khẳng định 78/78 LIVE/CODE khi chưa kiểm chứng toàn bộ; không đưa chức năng chưa có code vào báo cáo hoàn tất. Chốt `.mdj`/PNG và Word sau khi đối chiếu, giữ PR #16 Draft.
 
 
 **Bối cảnh:** Chủ dự án là BA/Project Lead; nhóm đồ án HUFLIT 5 thành viên. Repository: `hieuvo123ab-rgb/DoAn_CNPMNC`. Mã nguồn tham chiếu: `feat/edms-modern-aurora-ui` (PR #15), HEAD đã đối soát `43bea99cc2804ec661dc3fde331c4a0ddbf14a44`. Nhánh riêng chứa đính chính: `docs/huflit-factcheck-20261106`.
