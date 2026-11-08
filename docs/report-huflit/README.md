@@ -1,5 +1,7 @@
 # Hồ sơ Đối soát & Bàn giao Minh chứng EDMS Phục vụ Báo cáo HUFLIT
 
+> **CHỈ ĐẠO MỚI NHẤT — 08/11/2026 (ưu tiên hơn hướng dẫn cũ):** Chủ dự án xác nhận **không cần sơ đồ/diagram/UML** trong lần hoàn thiện báo cáo Word. Chỉ thực hiện theo yêu cầu thật của giảng viên, chèn **logo HUFLIT**, viết **Lời cảm ơn giảng viên**, chuẩn hóa hình thức và xuất DOCX/PDF. Xem [WORD_FINAL_REQUIREMENTS_2026-11-08.md](WORD_FINAL_REQUIREMENTS_2026-11-08.md). Các đoạn về StarUML phía dưới chỉ mang tính lịch sử/tham khảo, **không phải hạng mục phải làm**.
+
 > **OWNER REVIEW — 07/11/2026:** `STARUML_HANDOFF.md` đã được **viết lại theo controller/service/entity** tại commit `43bea99`; vẫn cần xuất sơ đồ `.mdj`/PNG và đối chiếu báo cáo Word cục bộ. Kiểm tra mới phát hiện **52/78 dòng** trong `FEATURE_EVIDENCE_MATRIX.md` dẫn tên tệp mã nguồn không tồn tại. **Chưa chốt hồ sơ minh chứng 78 chức năng hoặc báo cáo Word** đến khi xử lý [FEATURE_SOURCE_AUDIT_2026-11-07.md](FEATURE_SOURCE_AUDIT_2026-11-07.md). PR #16 giữ Draft.
 
 
