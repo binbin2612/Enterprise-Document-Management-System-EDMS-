@@ -195,7 +195,7 @@ export const LoginPage: React.FC = () => {
                     id="password-input"
                     type={showPassword ? 'text' : 'password'}
                     className="ent-input"
-                    placeholder="Nhập mật khẩu an toàn"
+                    placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
