@@ -1,5 +1,8 @@
 # Bàn giao Anti — chốt báo cáo Word HUFLIT theo yêu cầu giảng viên
 
+> **CHỈ ĐẠO MỚI 09/11/2026:** Xem [ANTI_PROMPT_HOAN_THIEN_BAO_CAO_2026-11-09.md](ANTI_PROMPT_HOAN_THIEN_BAO_CAO_2026-11-09.md) (bản giao việc ngắn nhất), [LUONG_HOAT_DONG_THUC_TE.md](LUONG_HOAT_DONG_THUC_TE.md) và [BAO_CAO_TOM_TAT_EDMS_2026-11-09.md](BAO_CAO_TOM_TAT_EDMS_2026-11-09.md). Chỉ rà báo cáo Word, giao diện và bằng chứng; **không diagram**. Các mục trước đây về vẽ UML không còn hiệu lực cho lần bàn giao này.
+
+
 **Chỉ đạo mới nhất của chủ dự án (08/11/2026):** **Không cần diagram/UML** trong lần chỉnh sửa này. Ưu tiên **đúng những yêu cầu của cô**, **logo HUFLIT**, **Lời cảm ơn giảng viên**, và kiểm tra hình thức báo cáo trước khi nộp.
 
 Đọc và thực hiện đầy đủ: **[WORD_FINAL_REQUIREMENTS_2026-11-08.md](WORD_FINAL_REQUIREMENTS_2026-11-08.md)**. Tài liệu này **thay thế** các yêu cầu cũ về việc vẽ StarUML, .mdj, Physical ERD hay thêm các chương sơ đồ trong Word. Tài liệu UML cũ được lưu làm tham khảo kỹ thuật nhưng không nằm trong phạm vi đầu ra.
