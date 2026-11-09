@@ -455,7 +455,7 @@ export const DocumentsPage: React.FC = () => {
             >
               <option value="LEXICAL">Tìm chính xác (Từ khóa)</option>
               <option value="SEMANTIC">Tìm theo ngữ nghĩa</option>
-              <option value="HYBRID">Tìm kết hợp (Lai ghép)</option>
+              <option value="HYBRID">Tìm kiếm kết hợp</option>
             </select>
 
             {/* Filter by Document Type */}
