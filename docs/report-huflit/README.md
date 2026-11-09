@@ -1,5 +1,8 @@
 # Hồ sơ Đối soát & Bàn giao Minh chứng EDMS Phục vụ Báo cáo HUFLIT
 
+> **ƯU TIÊN HIỆN TẠI — 09/11/2026:** Chủ dự án yêu cầu chỉnh ngắn các luồng, bỏ chi tiết rườm rà trên giao diện và báo cáo. Các nhãn tiếng Việt ở LoginPage, DocumentsPage, UsersPage đã được rút gọn **không đổi nghiệp vụ**. Dùng [LUONG_HOAT_DONG_THUC_TE.md](LUONG_HOAT_DONG_THUC_TE.md), [BAO_CAO_TOM_TAT_EDMS_2026-11-09.md](BAO_CAO_TOM_TAT_EDMS_2026-11-09.md) và [prompt Anti mới](ANTI_PROMPT_HOAN_THIEN_BAO_CAO_2026-11-09.md). Không cần sơ đồ; Word phải có trang bìa, **logo HUFLIT chính thức** và **Lời cảm ơn giảng viên**. Bản báo cáo Word mới đang được cấp qua hội thoại; chưa đưa tệp nhị phân lên GitHub. Giữ PR #16 Draft.
+
+
 > **CHỈ ĐẠO MỚI NHẤT — 08/11/2026 (ưu tiên hơn hướng dẫn cũ):** Chủ dự án xác nhận **không cần sơ đồ/diagram/UML** trong lần hoàn thiện báo cáo Word. Chỉ thực hiện theo yêu cầu thật của giảng viên, chèn **logo HUFLIT**, viết **Lời cảm ơn giảng viên**, chuẩn hóa hình thức và xuất DOCX/PDF. Xem [WORD_FINAL_REQUIREMENTS_2026-11-08.md](WORD_FINAL_REQUIREMENTS_2026-11-08.md). Các đoạn về StarUML phía dưới chỉ mang tính lịch sử/tham khảo, **không phải hạng mục phải làm**.
 
 > **OWNER REVIEW — 07/11/2026:** `STARUML_HANDOFF.md` đã được **viết lại theo controller/service/entity** tại commit `43bea99`; vẫn cần xuất sơ đồ `.mdj`/PNG và đối chiếu báo cáo Word cục bộ. Kiểm tra mới phát hiện **52/78 dòng** trong `FEATURE_EVIDENCE_MATRIX.md` dẫn tên tệp mã nguồn không tồn tại. **Chưa chốt hồ sơ minh chứng 78 chức năng hoặc báo cáo Word** đến khi xử lý [FEATURE_SOURCE_AUDIT_2026-11-07.md](FEATURE_SOURCE_AUDIT_2026-11-07.md). PR #16 giữ Draft.
