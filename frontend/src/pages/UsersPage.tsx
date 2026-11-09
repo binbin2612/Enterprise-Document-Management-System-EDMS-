@@ -567,7 +567,7 @@ export const UsersPage: React.FC = () => {
                 <div>
                   <h3>Ma trận phân quyền vai trò</h3>
                   <p className="text-muted">
-                    Bảng đối chiếu quyền hạn chi tiết giữa các vai trò trong hệ thống EDMS
+                    Quyền của từng vai trò
                   </p>
                 </div>
               </div>
